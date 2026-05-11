@@ -4,530 +4,644 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LH Capital — Intelligence Map</title>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
-:root {
-  --navy:#05014B;--navy2:#0C1C52;--gold:#FFC000;--white:#ffffff;
-  --off:#F5F7FB;--lt:#E4E8F2;--mid:#8892AA;--dark:#2D3A4A;
-  --sale:#D63B0A;--lease:#0A62D4;--prop:#059669;
-  --shadow:0 4px 24px rgba(5,1,75,0.13);--shadowlg:0 12px 48px rgba(5,1,75,0.18);
-}
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:var(--off);overflow:hidden;-webkit-font-smoothing:antialiased}
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#05014B;overflow:hidden}
+  #map{position:fixed;inset:0;z-index:1}
 
-/* MAP */
-#map{position:fixed;inset:0;z-index:1}
-.leaflet-popup-content-wrapper{border-radius:3px!important;box-shadow:var(--shadowlg)!important;border:1px solid var(--lt)!important}
-.leaflet-popup-content{margin:0!important}
-.leaflet-popup{z-index:1100!important}
+  /* TOP BAR */
+  #topbar{position:fixed;top:0;left:0;right:0;height:52px;background:#05014B;z-index:1000;display:flex;align-items:center;padding:0 20px;gap:14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  #logo{display:flex;align-items:center;gap:8px}
+  #logo-box{width:32px;height:32px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#05014B;border-radius:4px}
+  #logo-text{color:white;font-size:14px;font-weight:700;letter-spacing:0.02em}
+  #logo-text span{color:#FFC000}
+  #topbar-title{color:rgba(255,255,255,0.5);font-size:13px;margin-left:4px}
+  #topbar-spacer{flex:1}
+  #sf-status{font-size:11px;padding:5px 12px;border-radius:4px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;cursor:pointer;border:none;transition:all 0.2s}
+  #sf-status.disconnected{background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7)}
+  #sf-status.disconnected:hover{background:rgba(255,255,255,0.15)}
+  #sf-status.connecting{background:#FFC000;color:#05014B;cursor:default;animation:pulse 1.2s infinite}
+  #sf-status.connected{background:rgba(40,200,80,0.2);color:#40e080;cursor:default}
+  #sf-status.error{background:rgba(255,60,60,0.2);color:#ff6060;cursor:pointer}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 
-/* TOP BAR */
-#topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:54px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 2px 16px rgba(5,1,75,0.35)}
-.tb-left{display:flex;align-items:center;gap:11px}
-.tb-mark{width:28px;height:28px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--navy);flex-shrink:0}
-.tb-name{font-size:13px;font-weight:600;color:#fff}
-.tb-name span{color:var(--gold)}
-#sf-status{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border:1px solid;cursor:pointer;transition:opacity .15s}
-#sf-status.on{color:#22c55e;border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
-#sf-status.off{color:rgba(255,255,255,.45);border-color:rgba(255,255,255,.15)}
-#sf-status:hover{opacity:.75}
+  /* API KEY MODAL */
+  #apimodal{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;background:#05014B}
+  #apimodal.hidden{display:none}
+  #apicard{background:#0d0a3a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:40px;width:420px;max-width:90vw}
+  #apicard .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:24px}
+  #apicard .logo-box{width:38px;height:38px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:14px;color:#05014B;border-radius:6px}
+  #apicard .logo-name{font-size:18px;font-weight:800;color:white}
+  #apicard .logo-name span{color:#FFC000}
+  #apicard h2{color:white;font-size:22px;font-weight:800;margin-bottom:8px}
+  #apicard p{color:rgba(255,255,255,0.55);font-size:13px;line-height:1.6;margin-bottom:24px}
+  #apicard label{color:rgba(255,255,255,0.5);font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;display:block;margin-bottom:8px}
+  #apikey-input{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:12px 14px;color:white;font-size:14px;outline:none;font-family:monospace}
+  #apikey-input:focus{border-color:#FFC000}
+  #apikey-error{background:rgba(255,80,80,0.15);border:1px solid rgba(255,80,80,0.3);border-radius:4px;color:#ff8080;font-size:12px;padding:8px 12px;margin-top:8px;display:none}
+  #apikey-error.show{display:block}
+  #activate-btn{width:100%;background:#FFC000;color:#05014B;border:none;border-radius:6px;padding:15px;font-size:13px;font-weight:800;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:16px;transition:opacity 0.2s}
+  #activate-btn:hover{opacity:0.9}
+  #skip-btn{width:100%;background:transparent;border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:12px;font-size:12px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:rgba(255,255,255,0.4);cursor:pointer;margin-top:8px;transition:all 0.2s}
+  #skip-btn:hover{border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.6)}
+  #apicard .privacy{color:rgba(255,255,255,0.25);font-size:11px;text-align:center;margin-top:16px}
 
-/* ANTHROPIC KEY MODAL */
-#key-modal{position:fixed;inset:0;z-index:9000;background:rgba(5,1,75,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center}
-#key-box{background:#0d0d24;border:1px solid rgba(255,192,0,.2);padding:40px 36px;width:440px;max-width:calc(100vw - 32px);box-shadow:0 32px 96px rgba(0,0,0,.6)}
-.km-logo{display:flex;align-items:center;gap:10px;margin-bottom:26px}
-.km-mark{width:34px;height:34px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--navy)}
-.km-brand{font-size:14px;font-weight:700;color:#fff}
-.km-brand span{color:var(--gold)}
-.km-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
-.km-sub{font-size:13px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:26px}
-.km-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);display:block;margin-bottom:7px}
-.km-inp{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;padding:12px 13px;outline:none;font-family:'Courier New',monospace;transition:border-color .2s}
-.km-inp:focus{border-color:var(--gold)}
-.km-inp::placeholder{color:rgba(255,255,255,.2)}
-#km-err{font-size:12px;color:#f87171;margin-top:8px;display:none;padding:7px 10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2)}
-.km-btn{width:100%;margin-top:14px;padding:13px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
-.km-btn.pri{background:var(--gold);color:var(--navy)}
-.km-btn.ghost{background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.12);margin-top:8px}
-.km-btn:hover{opacity:.82}
-.km-btn:disabled{opacity:.4;cursor:not-allowed}
-.km-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:16px;line-height:1.6;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
+  /* CONNECT BANNER */
+  #connect-banner{position:fixed;top:62px;left:50%;transform:translateX(-50%);background:#c0392b;color:white;padding:10px 24px;border-radius:6px;font-size:13px;font-weight:700;letter-spacing:0.06em;z-index:900;display:none;cursor:pointer}
+  #connect-banner.show{display:block}
 
-/* SF CONNECT MODAL */
-#sf-modal{position:fixed;inset:0;z-index:8000;background:rgba(5,1,75,.82);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center}
-#sf-box{background:var(--white);padding:40px 36px;width:400px;max-width:calc(100vw - 32px);box-shadow:var(--shadowlg);text-align:center}
-.sf-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px}
-.sf-sub{font-size:13px;color:var(--mid);line-height:1.65;margin-bottom:28px}
-#sf-conn-btn{width:100%;padding:14px;background:var(--navy);color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
-#sf-conn-btn:hover{opacity:.88}
-.sf-skip{font-size:11px;color:var(--mid);cursor:pointer}
-.sf-skip:hover{color:var(--dark)}
-.sf-note{font-size:11px;color:var(--mid);margin-top:16px;line-height:1.5}
+  /* RESULTS PANEL */
+  #results-panel{position:fixed;top:52px;left:0;bottom:80px;width:320px;background:rgba(5,1,75,0.95);backdrop-filter:blur(12px);z-index:800;transform:translateX(-100%);transition:transform 0.3s ease;overflow-y:auto;border-right:1px solid rgba(255,255,255,0.08)}
+  #results-panel.open{transform:translateX(0)}
+  #results-header{padding:16px 20px 12px;border-bottom:1px solid rgba(255,255,255,0.08)}
+  #results-query{color:rgba(255,255,255,0.5);font-size:11px;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px}
+  #results-count{color:white;font-size:15px;font-weight:700}
+  #results-list{padding:8px 0}
+  .comp-item{padding:12px 20px;border-bottom:1px solid rgba(255,255,255,0.05);cursor:pointer;transition:background 0.15s}
+  .comp-item:hover{background:rgba(255,255,255,0.05)}
+  .comp-type{display:inline-block;font-size:9px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;padding:2px 6px;border-radius:3px;margin-bottom:5px}
+  .comp-type.sale{background:rgba(232,64,10,0.2);color:#E8400A}
+  .comp-type.lease{background:rgba(10,110,232,0.2);color:#0A6EE8}
+  .comp-addr{color:white;font-size:13px;font-weight:600;margin-bottom:3px}
+  .comp-meta{color:rgba(255,255,255,0.4);font-size:11px}
+  #bov-btn{display:block;margin:16px 20px;background:#FFC000;color:#05014B;border:none;border-radius:6px;padding:12px;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:calc(100% - 40px)}
+  #bov-btn:hover{opacity:0.9}
+  #clear-btn{display:block;margin:0 20px 16px;background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);border-radius:6px;padding:10px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;width:calc(100% - 40px)}
+  #clear-btn:hover{border-color:rgba(255,255,255,0.3);color:rgba(255,255,255,0.7)}
 
-/* VOICE BAR */
-#voicebar{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;align-items:center;background:var(--white);border-radius:50px;box-shadow:var(--shadowlg),0 2px 8px rgba(5,1,75,.08);border:1px solid var(--lt);min-width:520px;max-width:min(740px,calc(100vw - 40px));overflow:hidden}
-#q-inp{flex:1;border:none;outline:none;font-family:'Inter',sans-serif;font-size:14px;color:var(--dark);padding:17px 22px;background:transparent;caret-color:var(--navy)}
-#q-inp::placeholder{color:var(--mid)}
-#srch-btn{width:50px;height:54px;border:none;cursor:pointer;flex-shrink:0;background:rgba(5,1,75,.06);display:flex;align-items:center;justify-content:center;transition:background .15s}
-#srch-btn:hover{background:rgba(5,1,75,.1)}
-#mic-btn{width:54px;height:54px;border:none;cursor:pointer;flex-shrink:0;background:var(--navy);display:flex;align-items:center;justify-content:center;border-radius:0 50px 50px 0;transition:background .2s}
-#mic-btn:hover{background:var(--navy2)}
-#mic-btn.listening{background:#dc2626;animation:pulse 1s ease-in-out infinite}
-@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  /* SEARCH BAR */
+  #searchbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:900;display:flex;align-items:center;gap:0;background:white;border-radius:50px;box-shadow:0 4px 30px rgba(0,0,0,0.35);overflow:hidden;width:560px;max-width:calc(100vw - 40px)}
+  #search-input{flex:1;border:none;padding:14px 20px;font-size:14px;color:#1a1a2e;background:transparent;outline:none;min-width:0}
+  #search-input::placeholder{color:#9a9aaa}
+  #search-btn{background:#FFC000;border:none;width:48px;height:48px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+  #search-btn svg{width:18px;height:18px;fill:#05014B}
+  #mic-btn{background:#05014B;border:none;width:54px;height:54px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.2s}
+  #mic-btn.listening{background:#c0392b;animation:pulse 0.8s infinite}
+  #mic-btn svg{width:20px;height:20px;fill:white}
 
-/* VOICE STATUS */
-#vstatus{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:1000;background:var(--navy);color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:8px 20px;border-radius:24px;display:none;white-space:nowrap;box-shadow:var(--shadow)}
+  /* LEGEND */
+  #legend{position:fixed;bottom:90px;right:16px;background:rgba(5,1,75,0.9);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px 16px;z-index:800}
+  .legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px;color:rgba(255,255,255,0.7)}
+  .legend-item:last-child{margin-bottom:0}
+  .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
 
-/* RESULTS PANEL */
-#results{position:fixed;top:64px;left:14px;bottom:100px;z-index:900;width:296px;background:var(--white);border:1px solid var(--lt);box-shadow:var(--shadow);display:none;flex-direction:column}
-.rp-hdr{padding:14px 16px;border-bottom:1px solid var(--lt);flex-shrink:0}
-.rp-q{font-size:11px;font-style:italic;color:var(--mid);margin-bottom:6px;line-height:1.45}
-.rp-meta{display:flex;align-items:center;justify-content:space-between}
-.rp-cnt{font-size:13px;font-weight:700;color:var(--navy)}
-.rp-clr{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);cursor:pointer;padding:4px 8px;border:1px solid var(--lt);transition:all .15s}
-.rp-clr:hover{color:var(--dark);border-color:var(--mid)}
-#rlist{overflow-y:auto;flex:1}
-#rlist::-webkit-scrollbar{width:4px}
-#rlist::-webkit-scrollbar-thumb{background:var(--lt)}
-.ri{padding:11px 16px;border-bottom:1px solid var(--lt);cursor:pointer;transition:background .1s}
-.ri:hover{background:var(--off)}
-.ri:last-child{border-bottom:none}
-.ri-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;margin-bottom:5px;border-radius:2px}
-.ri-badge.sale{background:rgba(214,59,10,.1);color:var(--sale)}
-.ri-badge.lease{background:rgba(10,98,212,.1);color:var(--lease)}
-.ri-badge.prop{background:rgba(5,150,105,.1);color:var(--prop)}
-.ri-name{font-size:12px;font-weight:600;color:var(--dark);line-height:1.3;margin-bottom:2px}
-.ri-meta{font-size:11px;color:var(--mid)}
-.ri-val{font-size:13px;font-weight:700;color:var(--navy);margin-top:3px}
-.rp-ftr{padding:12px 16px;border-top:1px solid var(--lt);flex-shrink:0}
-#bov-btn{width:100%;padding:11px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
-#bov-btn:hover{opacity:.88}
+  /* BOV MODAL */
+  #bov-modal{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9500;display:none;align-items:center;justify-content:center}
+  #bov-modal.show{display:flex}
+  #bov-card{background:#0d0a3a;border:1px solid rgba(255,255,255,0.1);border-radius:12px;padding:32px;width:500px;max-width:90vw;max-height:85vh;overflow-y:auto}
+  #bov-card h3{color:white;font-size:18px;font-weight:800;margin-bottom:20px}
+  #bov-card .field-group{margin-bottom:14px}
+  #bov-card label{color:rgba(255,255,255,0.5);font-size:11px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;display:block;margin-bottom:6px}
+  #bov-card input,#bov-card textarea{width:100%;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:6px;padding:10px 12px;color:white;font-size:13px;outline:none;font-family:inherit}
+  #bov-card input:focus,#bov-card textarea:focus{border-color:#FFC000}
+  #bov-card textarea{height:80px;resize:none}
+  #bov-generate{background:#FFC000;color:#05014B;border:none;border-radius:6px;padding:13px;font-size:12px;font-weight:800;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:8px}
+  #bov-generate:hover{opacity:0.9}
+  #bov-cancel{background:transparent;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);border-radius:6px;padding:11px;font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:8px}
 
-/* TOAST */
-#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:2000;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 22px;border-radius:24px;display:none;white-space:nowrap;box-shadow:var(--shadow)}
-
-/* EMPTY STATE */
-#empty{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;text-align:center;pointer-events:none}
-.es-icon{font-size:48px;margin-bottom:16px;opacity:.2}
-.es-title{font-size:16px;font-weight:700;color:var(--navy);opacity:.25;margin-bottom:6px}
-.es-sub{font-size:13px;color:var(--mid);opacity:.4}
-
-/* LEGEND */
-#legend{position:fixed;bottom:96px;right:14px;z-index:900;background:var(--white);border:1px solid var(--lt);padding:10px 14px;box-shadow:var(--shadow)}
-.lg-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px;color:var(--dark)}
-.lg-row:last-child{margin-bottom:0}
-.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-
-/* POPUP */
-.pop{font-family:'Inter',sans-serif;padding:14px 16px;min-width:200px;max-width:270px}
-.pop-type{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
-.pop-type.sale{color:var(--sale)}.pop-type.lease{color:var(--lease)}.pop-type.prop{color:var(--prop)}
-.pop-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.3}
-.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px}
-.pop-fl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin-bottom:1px}
-.pop-fv{font-size:12px;font-weight:600;color:var(--dark)}
-
-/* BOV MODAL */
-#bov-modal{position:fixed;inset:0;z-index:3000;background:rgba(5,1,75,.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
-#bov-box{background:var(--white);width:540px;max-width:calc(100vw - 32px);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(5,1,75,.3)}
-.bov-hdr{padding:20px 24px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
-.bov-ht{font-size:14px;font-weight:700;color:#fff}
-.bov-x{font-size:22px;color:rgba(255,255,255,.45);cursor:pointer;line-height:1}
-.bov-x:hover{color:#fff}
-.bov-body{padding:22px 24px;overflow-y:auto;flex:1}
-.bov-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:6px;margin-top:14px}
-.bov-lbl:first-child{margin-top:0}
-.bov-inp{width:100%;border:1px solid var(--lt);background:var(--off);font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);padding:10px 12px;outline:none;transition:border-color .2s}
-.bov-inp:focus{border-color:var(--navy);background:#fff}
-.bov-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.bov-ftr{padding:16px 24px;border-top:1px solid var(--lt);display:flex;gap:10px;flex-shrink:0}
-#bov-gen{flex:1;padding:12px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
-#bov-gen:hover{opacity:.88}
-#bov-gen:disabled{opacity:.4;cursor:not-allowed}
-.bov-can{padding:12px 16px;background:transparent;color:var(--mid);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--lt);cursor:pointer}
-#bov-msg{font-size:12px;color:var(--navy);margin-top:10px;display:none;padding:9px 11px;background:var(--off);border:1px solid var(--lt);line-height:1.5}
+  /* LOADING OVERLAY */
+  #loading{position:fixed;top:52px;left:0;right:0;height:3px;background:linear-gradient(90deg,#FFC000,#ffdd6b,#FFC000);background-size:200% 100%;animation:shimmer 1.2s infinite;z-index:950;display:none}
+  #loading.show{display:block}
+  @keyframes shimmer{0%{background-position:0% 0%}100%{background-position:200% 0%}}
 </style>
 </head>
 <body>
+
+<!-- API KEY MODAL -->
+<div id="apimodal">
+  <div id="apicard">
+    <div class="logo-row">
+      <div class="logo-box">LH</div>
+      <div class="logo-name">LH <span>Capital</span> Partners</div>
+    </div>
+    <h2>Intelligence Map</h2>
+    <p>Enter your Anthropic API key to enable voice query interpretation. Stored in session memory only — cleared when browser closes.</p>
+    <label>Anthropic API Key</label>
+    <input id="apikey-input" type="password" placeholder="sk-ant-api03-...">
+    <div id="apikey-error">Enter your Anthropic API key.</div>
+    <button id="activate-btn">Activate &amp; Open Map</button>
+    <button id="skip-btn">Skip — View Map Without AI</button>
+    <div class="privacy">Sent only to api.anthropic.com via HTTPS. Never saved to disk.</div>
+  </div>
+</div>
+
+<!-- CONNECT SALESFORCE BANNER -->
+<div id="connect-banner" class="show" onclick="loginWithSalesforce()">
+  CONNECT SALESFORCE FIRST — CLICK THE BUTTON TOP RIGHT
+</div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="logo">
+    <div id="logo-box">LH</div>
+    <div id="logo-text">LH <span>Capital</span></div>
+  </div>
+  <div id="topbar-title">— Intelligence Map</div>
+  <div id="topbar-spacer"></div>
+  <button id="sf-status" class="disconnected" onclick="handleSFButtonClick()">Connect Salesforce</button>
+</div>
+
+<!-- MAP -->
 <div id="map"></div>
 
-<div id="empty"><div class="es-icon">🗺</div><div class="es-title">Intelligence Map</div><div class="es-sub">Speak or type a query to see results</div></div>
+<!-- LOADING BAR -->
+<div id="loading"></div>
 
-<div id="topbar">
-  <div class="tb-left">
-    <div class="tb-mark">LH</div>
-    <div class="tb-name">LH <span>Capital</span> — Intelligence Map</div>
+<!-- RESULTS PANEL -->
+<div id="results-panel">
+  <div id="results-header">
+    <div id="results-query"></div>
+    <div id="results-count"></div>
   </div>
-  <div id="sf-status" class="off" onclick="handleSFClick()">Connect Salesforce</div>
+  <div id="results-list"></div>
+  <button id="bov-btn" onclick="openBOV()">Create BOV from These Comps</button>
+  <button id="clear-btn" onclick="clearResults()">Clear Results</button>
 </div>
 
-<div id="toast"></div>
-
-<div id="results">
-  <div class="rp-hdr">
-    <div class="rp-q" id="rp-q"></div>
-    <div class="rp-meta"><div class="rp-cnt" id="rp-cnt">0 results</div><div class="rp-clr" onclick="clearAll()">Clear</div></div>
-  </div>
-  <div id="rlist"></div>
-  <div class="rp-ftr"><button id="bov-btn" onclick="openBOV()">📄 Create BOV</button></div>
-</div>
-
-<div id="legend">
-  <div class="lg-row"><div class="dot" style="background:var(--sale)"></div>Sale Comp</div>
-  <div class="lg-row"><div class="dot" style="background:var(--lease)"></div>Lease Comp</div>
-  <div class="lg-row"><div class="dot" style="background:var(--prop)"></div>Property</div>
-</div>
-
-<div id="vstatus"></div>
-<div id="voicebar">
-  <input type="text" id="q-inp" placeholder='Try: "IOS properties in Tampa" or "lease comps near Winter Garden FL last 2 years"' autocomplete="off">
-  <button id="srch-btn" onclick="runQuery()">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+<!-- SEARCH BAR -->
+<div id="searchbar">
+  <input id="search-input" type="text" placeholder="find all small Bay Warehouse comps in Florida" 
+         onkeydown="if(event.key==='Enter')runQuery(this.value)">
+  <button id="search-btn" onclick="runQuery(document.getElementById('search-input').value)">
+    <svg viewBox="0 0 24 24"><path d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0z" stroke="#05014B" stroke-width="2.5" stroke-linecap="round" fill="none"/></svg>
   </button>
   <button id="mic-btn" onclick="toggleMic()">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3zm-1 17.93V21h-2v2h6v-2h-2v-2.07A8 8 0 0 0 20 12h-2a6 6 0 0 1-12 0H4a8 8 0 0 0 7 7.93z" fill="white"/></svg>
   </button>
 </div>
 
-<div id="key-modal">
-  <div id="key-box">
-    <div class="km-logo"><div class="km-mark">LH</div><div class="km-brand">LH <span>Capital</span> Partners</div></div>
-    <div class="km-title">Intelligence Map</div>
-    <div class="km-sub">Enter your Anthropic API key to enable voice query interpretation. Stored in session memory only — cleared when browser closes.</div>
-    <label class="km-lbl">Anthropic API Key</label>
-    <input type="password" id="km-key" class="km-inp" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
-    <div id="km-err"></div>
-    <button class="km-btn pri" id="km-btn" onclick="activateKey()">Activate &amp; Open Map</button>
-    <button class="km-btn ghost" onclick="skipKey()">Skip — View Map Without AI</button>
-    <div class="km-note">Sent only to api.anthropic.com via HTTPS. Never saved to disk.</div>
-  </div>
+<!-- LEGEND -->
+<div id="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#E8400A"></div>Sale Comp</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0A6EE8"></div>Lease Comp</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Property</div>
 </div>
 
-<div id="sf-modal">
-  <div id="sf-box">
-    <div class="sf-title">Connect to Salesforce</div>
-    <div class="sf-sub">Sign in with your Salesforce account to query your comp and property database live.</div>
-    <button id="sf-conn-btn" onclick="loginSF()">Connect with Salesforce</button>
-    <div class="sf-skip" onclick="closeSFModal()">Not now</div>
-    <div class="sf-note">Uses your existing SF login. No separate password. Connection clears when browser closes.</div>
-  </div>
-</div>
-
+<!-- BOV MODAL -->
 <div id="bov-modal">
-  <div id="bov-box">
-    <div class="bov-hdr"><div class="bov-ht">Create Broker Opinion of Value</div><div class="bov-x" onclick="closeBOV()">×</div></div>
-    <div class="bov-body">
-      <label class="bov-lbl">Subject Property Address</label>
-      <input type="text" class="bov-inp" id="bov-addr" placeholder="1234 Industrial Dr, Winter Garden, FL 34787">
-      <div class="bov-2">
-        <div><label class="bov-lbl">Building Size (SF)</label><input type="text" class="bov-inp" id="bov-sf" placeholder="15,000"></div>
-        <div><label class="bov-lbl">Year Built</label><input type="text" class="bov-inp" id="bov-yr" placeholder="2004"></div>
-      </div>
-      <div class="bov-2">
-        <div><label class="bov-lbl">Asking Price or Rent</label><input type="text" class="bov-inp" id="bov-ask" placeholder="$1,450,000 or $9.75 PSF"></div>
-        <div><label class="bov-lbl">Property Subtype</label><input type="text" class="bov-inp" id="bov-sub" placeholder="Small Bay Warehouse"></div>
-      </div>
-      <label class="bov-lbl">Notes</label>
-      <input type="text" class="bov-inp" id="bov-notes" placeholder="IOS yard, NNN lease, 3 dock doors, etc.">
-      <div id="bov-msg"></div>
-    </div>
-    <div class="bov-ftr"><button id="bov-gen" onclick="generateBOV()">Generate BOV Document</button><button class="bov-can" onclick="closeBOV()">Cancel</button></div>
+  <div id="bov-card">
+    <h3>Generate Broker Opinion of Value</h3>
+    <div class="field-group"><label>Subject Property Address</label><input id="bov-addr" type="text" placeholder="123 Industrial Pkwy, Tampa, FL"></div>
+    <div class="field-group"><label>Building Size (SF)</label><input id="bov-sf" type="text" placeholder="12,500"></div>
+    <div class="field-group"><label>Year Built</label><input id="bov-yr" type="text" placeholder="1998"></div>
+    <div class="field-group"><label>Asking Price / Rent</label><input id="bov-ask" type="text" placeholder="$2,800,000 or $12.50/SF NNN"></div>
+    <div class="field-group"><label>Property Subtype</label><input id="bov-type" type="text" placeholder="Small Bay Industrial / IOS / Flex"></div>
+    <div class="field-group"><label>Notes</label><textarea id="bov-notes" placeholder="Additional context, conditions, lease terms..."></textarea></div>
+    <button id="bov-generate" onclick="generateBOV()">Generate BOV</button>
+    <button id="bov-cancel" onclick="document.getElementById('bov-modal').classList.remove('show')">Cancel</button>
   </div>
 </div>
 
 <script>
-// ★ UPDATE THIS WHEN YOU HAVE THE CONSUMER KEY FROM SF ★
-const CONSUMER_KEY = '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
-const SF_ORG       = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
-const SF_LOGIN     = 'https://login.salesforce.com';
+// ─── CONSTANTS ───────────────────────────────────────────────────────────────
+const CLIENT_ID   = '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
 const REDIRECT_URI = 'https://lhcapitalintelligence.github.io/intel-map/';
-const SF_API_VER   = 'v60.0';
-const ANTH_URL     = 'https://api.anthropic.com/v1/messages';
-const MODEL        = 'claude-sonnet-4-20250514';
-const NOM_URL      = 'https://nominatim.openstreetmap.org/search';
+const SF_LOGIN    = 'https://login.salesforce.com';
+const SF_API_VER  = 'v60.0';
+const MODEL       = 'claude-sonnet-4-20250514';
 
-let MAP, MARKS, RADLYR, RESULTS=[], IS_LISTENING=false, SPEECH=null;
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let map, markerLayer;
+let currentResults = [];
+let isListening = false;
+let recognition = null;
 
-const AK='lh_ak', STK='lh_stk', SINST='lh_sinst', SPKCE='lh_spkce';
-const getAK=()=>sessionStorage.getItem(AK);
-const getSTK=()=>sessionStorage.getItem(STK);
-const getSInst=()=>sessionStorage.getItem(SINST)||SF_ORG;
-const hasAK=()=>!!getAK();
-const hasSTK=()=>!!getSTK();
-function clearSF(){[STK,SINST,SPKCE].forEach(k=>sessionStorage.removeItem(k))}
-
-// MAP INIT
-function initMap(){
-  MAP=L.map('map',{center:[27.9,-81.8],zoom:8,zoomControl:false});
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',subdomains:'abcd',maxZoom:20}).addTo(MAP);
-  L.control.zoom({position:'bottomright'}).addTo(MAP);
-  MARKS=L.layerGroup().addTo(MAP);
-  RADLYR=L.layerGroup().addTo(MAP);
+// ─── TOKEN HELPERS ────────────────────────────────────────────────────────────
+// Use localStorage for tokens so they survive page reloads and redirects
+function getToken()    { return localStorage.getItem('lh_sf_token'); }
+function getOrgUrl()   { return localStorage.getItem('lh_sf_org'); }
+function isLoggedIn()  { return !!getToken(); }
+function setTokens(token, orgUrl) {
+  localStorage.setItem('lh_sf_token', token);
+  localStorage.setItem('lh_sf_org', orgUrl);
+}
+function clearTokens() {
+  localStorage.removeItem('lh_sf_token');
+  localStorage.removeItem('lh_sf_org');
+  // PKCE verifier cleanup
+  localStorage.removeItem('lh_pkce_verifier');
+  localStorage.removeItem('lh_pkce_ts');
 }
 
-// ANTHROPIC KEY
-async function activateKey(){
-  const k=document.getElementById('km-key').value.trim();
-  const err=document.getElementById('km-err'),btn=document.getElementById('km-btn');
-  err.style.display='none';
-  if(!k){showKErr('Enter your Anthropic API key.');return}
-  if(!k.startsWith('sk-ant-')){showKErr('Key must start with sk-ant-');return}
-  btn.disabled=true;btn.textContent='Validating...';
-  try{
-    const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:5,messages:[{role:'user',content:'ok'}]})});
-    if(r.status===401)throw new Error('Invalid API key.');
-    sessionStorage.setItem(AK,k);closeKeyModal();
-  }catch(e){showKErr(e.message);btn.disabled=false;btn.textContent='Activate & Open Map'}
-}
-function skipKey(){closeKeyModal()}
-function closeKeyModal(){document.getElementById('key-modal').style.display='none'}
-function showKErr(m){const e=document.getElementById('km-err');e.textContent=m;e.style.display='block'}
-
-// SF OAUTH PKCE
-async function genPKCE(){
-  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  const arr=new Uint8Array(64);crypto.getRandomValues(arr);
-  const verifier=Array.from(arr).map(b=>chars[b%chars.length]).join('');
-  const enc=new TextEncoder().encode(verifier);
-  const digest=await crypto.subtle.digest('SHA-256',enc);
-  const challenge=btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  return{verifier,challenge};
+// ─── OAUTH FLOW (Implicit — no token exchange, no CORS issue) ─────────────────
+// SF returns access_token directly in the URL hash. No server call needed.
+function loginWithSalesforce() {
+  setSFStatus('connecting', 'Connecting...');
+  const params = new URLSearchParams({
+    response_type: 'token',
+    client_id:     CLIENT_ID,
+    redirect_uri:  REDIRECT_URI,
+    scope:         'api',
+    prompt:        'login'
+  });
+  window.location.href = `${SF_LOGIN}/services/oauth2/authorize?${params}`;
 }
 
-async function loginSF(){
-  closeSFModal();
-  const{verifier,challenge}=await genPKCE();
-  sessionStorage.setItem(SPKCE,verifier);
-  const p=new URLSearchParams({response_type:'code',client_id:CONSUMER_KEY,redirect_uri:REDIRECT_URI,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
-  window.location.href=`${SF_LOGIN}/services/oauth2/authorize?${p}`;
-}
+// Called on page load — handles the #access_token= hash from Salesforce (implicit flow)
+function handleOAuthCallback() {
+  const hash = window.location.hash;
+  if (!hash) return false;
 
-async function handleCallback(){
-  const p=new URLSearchParams(window.location.search);
-  const code=p.get('code');
-  if(!code)return false;
-  const verifier=sessionStorage.getItem(SPKCE);
-  if(!verifier)return false;
-  try{
-    const body=new URLSearchParams({grant_type:'authorization_code',client_id:CONSUMER_KEY,redirect_uri:REDIRECT_URI,code,code_verifier:verifier});
-    const r=await fetch(`${SF_LOGIN}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
-    const d=await r.json();
-    if(d.access_token){
-      sessionStorage.setItem(STK,d.access_token);
-      sessionStorage.setItem(SINST,d.instance_url||SF_ORG);
-      window.history.replaceState({},'',window.location.pathname);
-      return true;
-    }
-  }catch(e){console.error('SF callback:',e)}
+  // Check for error
+  if (hash.includes('error=')) {
+    const params = new URLSearchParams(hash.replace('#','?').slice(1));
+    console.warn('[LH Map] SF OAuth error:', params.get('error'), params.get('error_description'));
+    window.history.replaceState({}, document.title, REDIRECT_URI);
+    setSFStatus('error', 'Auth Failed — Retry');
+    return false;
+  }
+
+  if (!hash.includes('access_token')) return false;
+
+  const params      = new URLSearchParams(hash.slice(1));
+  const token       = params.get('access_token');
+  const instanceUrl = params.get('instance_url');
+
+  // Clean hash from URL bar
+  window.history.replaceState({}, document.title, REDIRECT_URI);
+
+  if (token && instanceUrl) {
+    setTokens(token, decodeURIComponent(instanceUrl));
+    console.log('[LH Map] SF connected to:', decodeURIComponent(instanceUrl));
+    return true;
+  }
+
+  console.error('[LH Map] Token missing from callback hash:', hash.slice(0,100));
   return false;
 }
 
-function handleSFClick(){
-  if(hasSTK()){if(confirm('Disconnect from Salesforce?')){clearSF();syncSF()}}
-  else{document.getElementById('sf-modal').style.display='flex'}
-}
-function closeSFModal(){document.getElementById('sf-modal').style.display='none'}
-function syncSF(){
-  const el=document.getElementById('sf-status');
-  if(hasSTK()){el.textContent='✓ Salesforce Connected';el.className='on'}
-  else{el.textContent='Connect Salesforce';el.className='off'}
+function handleSFButtonClick() {
+  const st = document.getElementById('sf-status');
+  if (st.classList.contains('connected')) return;
+  loginWithSalesforce();
 }
 
-// SF QUERY
-async function sfQuery(soql){
-  const token=getSTK(),inst=getSInst();
-  if(!token)throw new Error('Not connected to Salesforce.');
-  const r=await fetch(`${inst}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`,{headers:{Authorization:`Bearer ${token}`}});
-  if(r.status===401){clearSF();syncSF();throw new Error('Salesforce session expired. Please reconnect.')}
-  if(!r.ok)throw new Error(`Salesforce error ${r.status}`);
-  return(await r.json()).records||[];
+// ─── SF QUERY ─────────────────────────────────────────────────────────────────
+async function querySF(soql) {
+  const token  = getToken();
+  const orgUrl = getOrgUrl();
+  if (!token || !orgUrl) throw new Error('Not authenticated');
+
+  const url = `${orgUrl}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`;
+  const res  = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+
+  if (res.status === 401) {
+    clearTokens();
+    setSFStatus('disconnected', 'Connect Salesforce');
+    showBanner();
+    throw new Error('Session expired — please reconnect Salesforce');
+  }
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`SF query failed (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json();
+  return data.records || [];
 }
 
-// VOICE
-function toggleMic(){
-  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){showToast('Voice requires Chrome',true);return}
-  IS_LISTENING?stopListen():startListen();
+// ─── MAP INIT ─────────────────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', { zoomControl: false }).setView([27.8, -82.6], 7);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+    subdomains: 'abcd', maxZoom: 19
+  }).addTo(map);
+  L.control.zoom({ position: 'bottomright' }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
 }
-function startListen(){
-  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-  SPEECH=new SR();SPEECH.continuous=false;SPEECH.interimResults=true;SPEECH.lang='en-US';
-  SPEECH.onstart=()=>{IS_LISTENING=true;document.getElementById('mic-btn').classList.add('listening');showVS('🎤 Listening...')};
-  SPEECH.onresult=e=>{
-    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
-    document.getElementById('q-inp').value=t;
-    if(e.results[e.results.length-1].isFinal){stopListen();setTimeout(runQuery,250)}
+
+// ─── QUERY PIPELINE ──────────────────────────────────────────────────────────
+async function runQuery(text) {
+  if (!text.trim()) return;
+  showLoading(true);
+
+  let criteria = null;
+  const apiKey = sessionStorage.getItem('lh_anthropic_key');
+
+  if (apiKey) {
+    try { criteria = await interpretQuery(text, apiKey); } catch(e) { console.warn('AI parse failed, using fallback:', e); }
+  }
+  if (!criteria) criteria = localParse(text);
+
+  try {
+    const records = await fetchComps(criteria);
+    plotResults(records, text, criteria);
+  } catch(err) {
+    console.error('Query failed:', err);
+    alert(err.message);
+  }
+  showLoading(false);
+}
+
+async function interpretQuery(text, apiKey) {
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': apiKey,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      max_tokens: 300,
+      system: 'You are a commercial real estate data parser. Extract query criteria from natural language and return ONLY a JSON object with these fields: comp_type (sale|lease|both), subtype (string or null), state (2-letter code or null), city (string or null), radius_miles (number or null), years (number or null). No explanation, no markdown, just the JSON.',
+      messages: [{ role: 'user', content: text }]
+    })
+  });
+  const data = await res.json();
+  const raw  = data.content?.[0]?.text?.trim() || '';
+  const clean = raw.replace(/```json|```/g,'').trim();
+  return JSON.parse(clean);
+}
+
+function localParse(text) {
+  const t  = text.toLowerCase();
+  const ct = t.includes('sale') ? 'sale' : t.includes('lease') ? 'lease' : 'both';
+  const states = ['fl','florida','ga','georgia','nc','sc','tx','al','tn'];
+  let state = null;
+  for (const s of states) { if (t.includes(s)) { state = s.length===2?s.toUpperCase():s.slice(0,2).toUpperCase(); break; } }
+  const yrMatch  = t.match(/last\s+(\d+)\s+year/);
+  const radMatch = t.match(/(\d+)\s*mile/);
+  const subtypes = ['small bay','warehouse','flex','ios','outdoor storage','distribution','cold storage','industrial'];
+  let subtype = null;
+  for (const s of subtypes) { if (t.includes(s)) { subtype = s; break; } }
+  return {
+    comp_type:    ct,
+    subtype,
+    state,
+    city:         null,
+    radius_miles: radMatch  ? parseInt(radMatch[1])  : null,
+    years:        yrMatch   ? parseInt(yrMatch[1])   : null
   };
-  SPEECH.onerror=e=>{stopListen();showToast('Voice error: '+e.error,true)};
-  SPEECH.onend=()=>stopListen();
-  SPEECH.start();
 }
-function stopListen(){
-  IS_LISTENING=false;
+
+async function fetchComps(criteria) {
+  if (!isLoggedIn()) { showBanner(); throw new Error('Connect Salesforce first to search live data'); }
+
+  let where = ["IsDeleted = false", "TTL_Core__Latitude__c != null"];
+
+  if (criteria.comp_type === 'sale') {
+    where.push("RecordType.Name LIKE '%Sale%'");
+  } else if (criteria.comp_type === 'lease') {
+    where.push("RecordType.Name LIKE '%Lease%'");
+  }
+  if (criteria.state)   where.push(`TTL_Core__State__c = '${criteria.state}'`);
+  if (criteria.subtype) where.push(`TTL_Core__Property_Subtype__c LIKE '%${criteria.subtype}%'`);
+  if (criteria.years) {
+    const cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - criteria.years);
+    where.push(`TTL_Core__Close_Deal_Date__c >= ${cutoff.toISOString().split('T')[0]}`);
+  }
+
+  const soql = `SELECT Id, Name, TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
+    TTL_Core__Latitude__c, TTL_Core__Longitude__c, TTL_Core__Rent_SF_Year__c,
+    TTL_Core__Price_total__c, TTL_Core__Rentable_SF__c, TTL_Core__Gross_SF__c,
+    TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
+    TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
+    TTL_Core__Submarket__c, RecordType.Name
+    FROM TTL_Core__Comp__c
+    WHERE ${where.join(' AND ')}
+    LIMIT 500`;
+
+  return await querySF(soql);
+}
+
+// ─── PLOT RESULTS ─────────────────────────────────────────────────────────────
+function plotResults(records, queryText, criteria) {
+  markerLayer.clearLayers();
+  currentResults = records;
+
+  if (!records.length) {
+    document.getElementById('results-count').textContent = 'No results found';
+    document.getElementById('results-query').textContent = queryText;
+    document.getElementById('results-list').innerHTML = '<div style="padding:20px;color:rgba(255,255,255,0.4);font-size:13px">No comps matched your query.</div>';
+    document.getElementById('results-panel').classList.add('open');
+    return;
+  }
+
+  const bounds = [];
+  const listEl = document.getElementById('results-list');
+  listEl.innerHTML = '';
+
+  records.forEach((r, i) => {
+    const lat  = parseFloat(r.TTL_Core__Latitude__c);
+    const lng  = parseFloat(r.TTL_Core__Longitude__c);
+    if (!lat || !lng) return;
+
+    const rtName = (r.RecordType?.Name || '').toLowerCase();
+    const isSale = rtName.includes('sale');
+    const color  = isSale ? '#E8400A' : '#0A6EE8';
+
+    const marker = L.circleMarker([lat, lng], {
+      radius: 7, fillColor: color, color: 'white',
+      weight: 1.5, opacity: 1, fillOpacity: 0.85
+    });
+
+    const addr   = r.TTL_Core__Address__c || 'Unknown';
+    const city   = r.TTL_Core__City__c || '';
+    const state  = r.TTL_Core__State__c || '';
+    const sf     = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
+    const sfStr  = sf ? `${parseInt(sf).toLocaleString()} SF` : '';
+    const price  = isSale ? r.TTL_Core__Price_total__c : r.TTL_Core__Rent_SF_Year__c;
+    const priceStr = price
+      ? (isSale ? `$${parseInt(price).toLocaleString()}` : `$${parseFloat(price).toFixed(2)}/SF/yr`)
+      : '';
+    const date   = r.TTL_Core__Close_Deal_Date__c
+      ? new Date(r.TTL_Core__Close_Deal_Date__c).getFullYear() : '';
+    const subtype = r.TTL_Core__Property_Subtype__c || '';
+
+    marker.bindPopup(`
+      <div style="min-width:180px">
+        <div style="font-weight:700;margin-bottom:4px">${addr}</div>
+        <div style="color:#666;font-size:12px">${city}, ${state}</div>
+        ${sfStr    ? `<div style="font-size:12px;margin-top:4px">${sfStr}</div>` : ''}
+        ${priceStr ? `<div style="font-weight:700;color:${color};margin-top:2px">${priceStr}</div>` : ''}
+        ${date     ? `<div style="font-size:11px;color:#999">${date}</div>` : ''}
+      </div>
+    `);
+    marker.addTo(markerLayer);
+    bounds.push([lat, lng]);
+
+    // List item
+    const item = document.createElement('div');
+    item.className = 'comp-item';
+    item.innerHTML = `
+      <div class="comp-type ${isSale?'sale':'lease'}">${isSale?'Sale':'Lease'}</div>
+      <div class="comp-addr">${addr}</div>
+      <div class="comp-meta">${[city && state?`${city}, ${state}`:'', sfStr, priceStr, date].filter(Boolean).join(' · ')}</div>
+    `;
+    item.onclick = () => marker.openPopup();
+    listEl.appendChild(item);
+  });
+
+  document.getElementById('results-query').textContent = queryText;
+  document.getElementById('results-count').textContent = `${records.length} result${records.length===1?'':'s'}`;
+  document.getElementById('results-panel').classList.add('open');
+
+  if (bounds.length) map.fitBounds(bounds, { padding: [40, 40], maxZoom: 13 });
+}
+
+function clearResults() {
+  markerLayer.clearLayers();
+  currentResults = [];
+  document.getElementById('results-panel').classList.remove('open');
+  document.getElementById('search-input').value = '';
+}
+
+// ─── BOV GENERATION ───────────────────────────────────────────────────────────
+function openBOV() {
+  document.getElementById('bov-modal').classList.add('show');
+}
+
+async function generateBOV() {
+  const apiKey = sessionStorage.getItem('lh_anthropic_key');
+  if (!apiKey) { alert('Enter your Anthropic API key first (reload the page).'); return; }
+
+  const subject = {
+    address: document.getElementById('bov-addr').value,
+    sf:      document.getElementById('bov-sf').value,
+    yr:      document.getElementById('bov-yr').value,
+    ask:     document.getElementById('bov-ask').value,
+    type:    document.getElementById('bov-type').value,
+    notes:   document.getElementById('bov-notes').value
+  };
+
+  document.getElementById('bov-generate').textContent = 'Generating...';
+  document.getElementById('bov-generate').disabled = true;
+
+  const compSummary = currentResults.slice(0,20).map(r => {
+    const rtName = (r.RecordType?.Name||'').toLowerCase();
+    const isSale = rtName.includes('sale');
+    return `${isSale?'SALE':'LEASE'}: ${r.TTL_Core__Address__c||''}, ${r.TTL_Core__City__c||''} ${r.TTL_Core__State__c||''} | ${r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c||'?'} SF | ${isSale?('$'+(parseInt(r.TTL_Core__Price_total__c)||0).toLocaleString()):('$'+(parseFloat(r.TTL_Core__Rent_SF_Year__c)||0).toFixed(2)+'/SF/yr')} | ${r.TTL_Core__Close_Deal_Date__c||''} | ${r.TTL_Core__Property_Subtype__c||''}`;
+  }).join('\n');
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json','x-api-key':apiKey,'anthropic-version':'2023-06-01' },
+      body: JSON.stringify({
+        model: MODEL,
+        max_tokens: 2500,
+        system: `You are a senior industrial real estate broker at LH Capital Partners, a Florida-based firm specializing in IOS and small-bay industrial. Write a Broker Opinion of Value. Direct broker voice, specific numbers, no consultant jargon. Output clean HTML with inline styles using navy #05014B and gold #FFC000 color scheme. Include: Executive Summary, Market Overview, Comparable Analysis (table), Valuation Opinion, Conclusion.`,
+        messages: [{ role: 'user', content:
+          `Subject Property:\nAddress: ${subject.address}\nSize: ${subject.sf} SF\nYear Built: ${subject.yr}\nAsking: ${subject.ask}\nSubtype: ${subject.type}\nNotes: ${subject.notes}\n\nComparables (${currentResults.length} total, showing up to 20):\n${compSummary}`
+        }]
+      })
+    });
+    const data = await res.json();
+    const html = data.content?.[0]?.text || '<p>BOV generation failed.</p>';
+    const win  = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><title>BOV — ${subject.address}</title><meta charset="UTF-8"><style>body{font-family:-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 20px}@media print{.no-print{display:none}}</style></head><body><div class="no-print" style="margin-bottom:20px"><button onclick="window.print()" style="background:#05014B;color:white;border:none;padding:10px 24px;border-radius:4px;cursor:pointer;font-weight:700">Print / Save PDF</button></div>${html}</body></html>`);
+    win.document.close();
+    document.getElementById('bov-modal').classList.remove('show');
+  } catch(err) {
+    alert('BOV generation failed: ' + err.message);
+  }
+
+  document.getElementById('bov-generate').textContent = 'Generate BOV';
+  document.getElementById('bov-generate').disabled = false;
+}
+
+// ─── VOICE ────────────────────────────────────────────────────────────────────
+function toggleMic() {
+  if (isListening) { stopListening(); return; }
+  if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+    alert('Voice input requires Chrome on desktop or Android.'); return;
+  }
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  recognition = new SR();
+  recognition.continuous = false;
+  recognition.interimResults = true;
+  recognition.lang = 'en-US';
+
+  recognition.onstart  = () => { isListening = true; document.getElementById('mic-btn').classList.add('listening'); };
+  recognition.onend    = () => { isListening = false; document.getElementById('mic-btn').classList.remove('listening'); };
+  recognition.onerror  = (e) => { console.warn('Speech error:', e.error); stopListening(); };
+
+  recognition.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      if (e.results[i].isFinal) final += e.results[i][0].transcript;
+      else interim += e.results[i][0].transcript;
+    }
+    document.getElementById('search-input').value = final || interim;
+    if (final) { stopListening(); runQuery(final); }
+  };
+
+  recognition.start();
+}
+
+function stopListening() {
+  isListening = false;
   document.getElementById('mic-btn').classList.remove('listening');
-  hideVS();try{if(SPEECH)SPEECH.stop()}catch{}
+  if (recognition) { try { recognition.stop(); } catch(e){} }
 }
-function showVS(m){const e=document.getElementById('vstatus');e.textContent=m;e.style.display='block'}
-function hideVS(){document.getElementById('vstatus').style.display='none'}
 
-// QUERY RUNNER
-async function runQuery(){
-  const q=document.getElementById('q-inp').value.trim();
-  if(!q)return;
-  if(!hasSTK()){showToast('Connect Salesforce first — click the button top right',true);return}
-  showToast('Interpreting query...');
-  let c;
-  try{c=hasAK()?await interpretAI(q):interpretLocal(q)}
-  catch(e){c=interpretLocal(q)}
-  showToast(`Searching${c.location?' near '+c.location:''}...`);
-  let center=null;
-  if(c.location)center=await geocode(c.location+' USA');
-  const soql=buildSOQL(c);
-  let recs=[];
-  try{recs=await sfQuery(soql)}
-  catch(e){hideToast();showToast(e.message,true);return}
-  const items=recs.map(r=>norm(r,c.intent)).filter(r=>r.lat&&r.lng&&!isNaN(r.lat));
-  const final=center?items.filter(r=>dist(center.lat,center.lng,r.lat,r.lng)<=(c.radius||10)):items;
-  final.sort((a,b)=>(a._d||0)-(b._d||0));
-  if(center&&c.radius){
-    RADLYR.clearLayers();
-    L.circle([center.lat,center.lng],{radius:c.radius*1609.34,color:'rgba(5,1,75,.3)',weight:1.5,fillColor:'rgba(5,1,75,.04)',fillOpacity:1}).addTo(RADLYR);
-    MAP.setView([center.lat,center.lng],12);
+// ─── UI HELPERS ───────────────────────────────────────────────────────────────
+function setSFStatus(state, label) {
+  const btn = document.getElementById('sf-status');
+  btn.className = 'disconnected';
+  btn.classList.add(state);
+  btn.textContent = label;
+}
+
+function showBanner()  { document.getElementById('connect-banner').classList.add('show'); }
+function hideBanner()  { document.getElementById('connect-banner').classList.remove('show'); }
+function showLoading(v){ document.getElementById('loading').classList.toggle('show', v); }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('activate-btn').onclick = () => {
+  const key = document.getElementById('apikey-input').value.trim();
+  if (!key.startsWith('sk-ant-')) {
+    document.getElementById('apikey-error').classList.add('show'); return;
   }
-  RESULTS=final;
-  plotAll(final);
-  showPanel(final,q);
-  hideToast();
-  document.getElementById('empty').style.display='none';
-}
+  sessionStorage.setItem('lh_anthropic_key', key);
+  document.getElementById('apimodal').classList.add('hidden');
+};
 
-// AI INTERPRETATION
-async function interpretAI(q){
-  const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getAK(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-  body:JSON.stringify({model:MODEL,max_tokens:300,messages:[{role:'user',content:`Parse this Florida CRE broker query into JSON criteria:\n"${q}"\n\nReturn ONLY JSON:\n{\n  "intent": "comp" or "property",\n  "comp_type": "lease" or "sale" or "both",\n  "location": "city, state" or null,\n  "radius": miles as number,\n  "subtype": ["keyword array"] or [],\n  "ios_only": true or false,\n  "years": number or null\n}\n\nIntent: "comp" if mentions comps/sales/leases/deals. "property" if mentions properties/sites/buildings/IOS/parcels.`}]})});
-  const d=await r.json();
-  const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-  return JSON.parse(txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
-}
+document.getElementById('skip-btn').onclick = () => {
+  document.getElementById('apimodal').classList.add('hidden');
+};
 
-function interpretLocal(q){
-  const ql=q.toLowerCase();
-  const intent=(ql.includes('comp')||ql.includes('sale')||ql.includes('lease')||ql.includes('deal'))?'comp':'property';
-  const comp_type=ql.includes('sale comp')||ql.includes('sold')?'sale':ql.includes('lease comp')||ql.includes('leased')?'lease':'both';
-  const rm=ql.match(/(\d+)\s*mi/);const radius=rm?parseInt(rm[1]):5;
-  const ym=ql.match(/last\s+(\d+)\s*year/);const years=ym?parseInt(ym[1]):null;
-  const lm=ql.match(/(?:in|near|around|of)\s+([a-z][a-z\s]+?)(?:\s+fl|\s+florida|\s+last|\s+\d|$)/i);
-  const location=lm?lm[1].trim()+', FL':null;
-  const ios_only=ql.includes('ios')||ql.includes('outdoor storage');
-  const subtype=[];
-  ['small bay','warehouse','flex','distribution','cold storage','light industrial'].forEach(s=>{if(ql.includes(s))subtype.push(s)});
-  return{intent,comp_type,location,radius,years,ios_only,subtype};
-}
-
-function buildSOQL(c){
-  if(c.intent==='property'){
-    let w=`IsDeleted=false AND TTL_Core__Latitude__c!=null`;
-    if(c.ios_only)w+=` AND IOS_Allowed__c='Yes'`;
-    if(c.subtype&&c.subtype.length)w+=` AND (`+c.subtype.map(s=>`TTL_Core__Property_Type__c LIKE '%${s}%'`).join(' OR ')+`)`;
-    return`SELECT Id,Name,TTL_Core__Property_Address__c,TTL_Core__City__c,TTL_Core__State__c,TTL_Core__Latitude__c,TTL_Core__Longitude__c,IOS_Allowed__c,IOS_Zoning_Score__c,Intelligence_Score__c,Owner_Willingness_or_Readiness_to_Sell__c,TTL_Core__Market__c,TTL_Core__Building_Size__c FROM TTL_Core__Property__c WHERE ${w} LIMIT 300`;
-  }
-  let w=`IsDeleted=false AND TTL_Core__Latitude__c!=null`;
-  if(c.comp_type==='sale')w+=` AND RecordType.Name LIKE '%Sale%'`;
-  if(c.comp_type==='lease')w+=` AND RecordType.Name LIKE '%Lease%'`;
-  if(c.subtype&&c.subtype.length)w+=` AND (`+c.subtype.map(s=>`TTL_Core__Property_Subtype__c LIKE '%${s}%'`).join(' OR ')+`)`;
-  if(c.years){const d=new Date();d.setFullYear(d.getFullYear()-c.years);w+=` AND TTL_Core__Close_Deal_Date__c>=${d.toISOString().split('T')[0]}`}
-  return`SELECT Id,Name,TTL_Core__Address__c,TTL_Core__City__c,TTL_Core__State__c,TTL_Core__Latitude__c,TTL_Core__Longitude__c,TTL_Core__Rent_SF_Year__c,TTL_Core__Price_total__c,TTL_Core__Rentable_SF__c,TTL_Core__Gross_SF__c,TTL_Core__Property_Subtype__c,TTL_Core__Property_Type__c,TTL_Core__Close_Deal_Date__c,RecordType.Name FROM TTL_Core__Comp__c WHERE ${w} LIMIT 300`;
-}
-
-function norm(r,intent){
-  if(intent==='property')return{id:r.Id,type:'prop',name:r.Name||'',addr:[r.TTL_Core__Property_Address__c,r.TTL_Core__City__c,r.TTL_Core__State__c].filter(Boolean).join(', '),lat:parseFloat(r.TTL_Core__Latitude__c),lng:parseFloat(r.TTL_Core__Longitude__c),sf:r.TTL_Core__Building_Size__c,ios:r.IOS_Allowed__c,score:r.Intelligence_Score__c,market:r.TTL_Core__Market__c,willingness:r.Owner_Willingness_or_Readiness_to_Sell__c};
-  const type=(r.RecordType?.Name||'').toLowerCase().includes('sale')?'sale':'lease';
-  return{id:r.Id,type,name:r.Name||'',addr:[r.TTL_Core__Address__c,r.TTL_Core__City__c,r.TTL_Core__State__c].filter(Boolean).join(', '),lat:parseFloat(r.TTL_Core__Latitude__c),lng:parseFloat(r.TTL_Core__Longitude__c),price:r.TTL_Core__Price_total__c,rent:r.TTL_Core__Rent_SF_Year__c,sf:r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c,subtype:r.TTL_Core__Property_Subtype__c,date:r.TTL_Core__Close_Deal_Date__c};
-}
-
-// GEOCODING
-async function geocode(q){
-  try{const r=await fetch(`${NOM_URL}?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=us`);const d=await r.json();if(d?.[0])return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}}catch{}return null;
-}
-function dist(la1,ln1,la2,ln2){const R=3958.8,dL=(la2-la1)*Math.PI/180,dl=(ln2-ln1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
-
-// PLOTTING
-const CC={sale:'#D63B0A',lease:'#0A62D4',prop:'#059669'};
-function plotAll(items){
-  MARKS.clearLayers();
-  items.forEach(r=>{
-    if(isNaN(r.lat)||isNaN(r.lng))return;
-    const icon=L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:${CC[r.type]};border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25)"></div>`,iconSize:[12,12],iconAnchor:[6,6],popupAnchor:[0,-8]});
-    L.marker([r.lat,r.lng],{icon}).bindPopup(mkPop(r)).addTo(MARKS);
-  });
-}
-
-function mkPop(r){
-  const lbl=r.type==='sale'?'Sale Comp':r.type==='lease'?'Lease Comp':'Property';
-  const val=r.type==='sale'?(r.price?`$${Number(r.price).toLocaleString()}`:'—'):r.type==='lease'?(r.rent?`$${r.rent} PSF/yr`:'—'):(r.ios==='Yes'?'✓ IOS':'—');
-  return`<div class="pop"><div class="pop-type ${r.type}">${lbl}</div><div class="pop-name">${x(r.addr||r.name)}</div><div class="pop-grid"><div><div class="pop-fl">${r.type==='prop'?'IOS':'Value'}</div><div class="pop-fv">${x(val)}</div></div><div><div class="pop-fl">Size</div><div class="pop-fv">${r.sf?Number(r.sf).toLocaleString()+' SF':'—'}</div></div>${r.subtype?`<div><div class="pop-fl">Subtype</div><div class="pop-fv">${x(r.subtype)}</div></div>`:''} ${r.date?`<div><div class="pop-fl">Date</div><div class="pop-fv">${r.date}</div></div>`:''}</div></div>`;
-}
-function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-// RESULTS PANEL
-function showPanel(items,q){
-  document.getElementById('results').style.display='flex';
-  document.getElementById('rp-q').textContent=`"${q}"`;
-  document.getElementById('rp-cnt').textContent=`${items.length} result${items.length!==1?'s':''}`;
-  const list=document.getElementById('rlist');list.innerHTML='';
-  if(!items.length){list.innerHTML='<div style="padding:20px 16px;font-size:12px;color:#8892AA;text-align:center">No results. Try broader terms or larger radius.</div>';return}
-  items.slice(0,60).forEach(r=>{
-    const el=document.createElement('div');el.className='ri';
-    const lbl=r.type==='sale'?'Sale':r.type==='lease'?'Lease':'Property';
-    const val=r.type==='sale'?(r.price?'$'+Number(r.price).toLocaleString():''):r.type==='lease'?(r.rent?'$'+r.rent+' PSF':''):(r.ios==='Yes'?'IOS ✓':'');
-    el.innerHTML=`<span class="ri-badge ${r.type}">${lbl}</span><div class="ri-name">${r.addr||r.name||'—'}</div><div class="ri-meta">${r.sf?Number(r.sf).toLocaleString()+' SF':''}</div>${val?`<div class="ri-val">${val}</div>`:''}`;
-    el.onclick=()=>{if(r.lat)MAP.setView([r.lat,r.lng],15)};
-    list.appendChild(el);
-  });
-}
-
-function clearAll(){MARKS.clearLayers();RADLYR.clearLayers();RESULTS=[];document.getElementById('results').style.display='none';document.getElementById('q-inp').value='';document.getElementById('empty').style.display='block'}
-
-// BOV
-function openBOV(){document.getElementById('bov-modal').style.display='flex'}
-function closeBOV(){document.getElementById('bov-modal').style.display='none'}
-async function generateBOV(){
-  if(!hasAK()){showBovMsg('Anthropic key required.');return}
-  const addr=document.getElementById('bov-addr').value.trim();
-  if(!addr){showBovMsg('Enter subject property address.');return}
-  const btn=document.getElementById('bov-gen');btn.disabled=true;btn.textContent='Generating...';
-  showBovMsg('Writing BOV from comps on map...');
-  const sales=RESULTS.filter(r=>r.type==='sale').slice(0,10);
-  const leases=RESULTS.filter(r=>r.type==='lease').slice(0,10);
-  const cb=[sales.length?'SALE COMPS:\n'+sales.map(c=>`- ${c.addr} | ${c.sf?Number(c.sf).toLocaleString()+' SF':''} | ${c.price?'$'+Number(c.price).toLocaleString():''} | ${c.date||''}`).join('\n'):'',leases.length?'LEASE COMPS:\n'+leases.map(c=>`- ${c.addr} | ${c.sf?Number(c.sf).toLocaleString()+' SF':''} | ${c.rent?'$'+c.rent+' PSF/yr':''} | ${c.date||''}`).join('\n'):''].filter(Boolean).join('\n\n');
-  const prompt=`You are a senior industrial real estate broker at LH Capital Partners. Write a complete professional BOV.\n\nSUBJECT:\nAddress: ${addr}\nSF: ${document.getElementById('bov-sf').value||'unknown'}\nYear: ${document.getElementById('bov-yr').value||'unknown'}\nAsking: ${document.getElementById('bov-ask').value||'TBD'}\nSubtype: ${document.getElementById('bov-sub').value||'Industrial'}\nNotes: ${document.getElementById('bov-notes').value||'none'}\n\nMARKET COMPS:\n${cb||'No comps loaded.'}\n\nWrite: Executive Summary, Market Overview, Comp tables, Valuation with specific numbers, Conclusion. Broker voice — direct, no jargon. Return HTML body only. Colors: navy #05014B, gold #FFC000.`;
-  try{
-    const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getAK(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:4000,messages:[{role:'user',content:prompt}]})});
-    const d=await r.json();
-    const html=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
-    const w=window.open('','_blank');
-    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>BOV — ${addr}</title><style>body{font-family:-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 32px 80px;color:#2D3A4A}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#05014B;color:#fff;padding:8px 12px;font-size:12px;text-align:left}td{padding:8px 12px;border-bottom:1px solid #E4E8F2;font-size:13px}@media print{body{margin:0;padding:20px}}</style></head><body><div style="background:#05014B;padding:22px 32px;margin:0 -32px 32px;display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:#05014B">LH</div><div><div style="font-size:15px;font-weight:700;color:#fff">Broker Opinion of Value</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">${addr} · LH Capital Partners · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div><button onclick="window.print()" style="margin-left:auto;padding:8px 18px;background:#FFC000;color:#05014B;border:none;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">Print / PDF</button></div>${html}</body></html>`);
-    w.document.close();closeBOV();
-  }catch(e){showBovMsg('Error: '+e.message)}
-  finally{btn.disabled=false;btn.textContent='Generate BOV Document'}
-}
-function showBovMsg(m){const e=document.getElementById('bov-msg');e.textContent=m;e.style.display='block'}
-
-// TOAST
-let TT;
-function showToast(m,isErr){const t=document.getElementById('toast');t.textContent=m;t.style.background=isErr?'#B91C1C':'var(--navy)';t.style.display='block';clearTimeout(TT);if(!isErr)TT=setTimeout(hideToast,3000)}
-function hideToast(){document.getElementById('toast').style.display='none'}
-
-// INIT
-document.addEventListener('DOMContentLoaded',async()=>{
+document.addEventListener('DOMContentLoaded', async () => {
   initMap();
-  const authed=await handleCallback();
-  if(authed){syncSF();showToast('✓ Salesforce connected')}
-  syncSF();
-  if(!hasAK())document.getElementById('key-modal').style.display='flex';
-  document.getElementById('q-inp').addEventListener('keydown',e=>{if(e.key==='Enter')runQuery()});
-  document.getElementById('km-key').addEventListener('keydown',e=>{if(e.key==='Enter')activateKey()});
+
+  const hash = window.location.hash;
+
+  // ── OAUTH CALLBACK PATH ──────────────────────────────────────────────────
+  // SF redirected back with #access_token= in the hash (implicit flow)
+  if (hash && (hash.includes('access_token') || hash.includes('error'))) {
+    console.log('[LH Map] OAuth callback detected in hash. Processing...');
+    document.getElementById('apimodal').classList.add('hidden');
+
+    const success = handleOAuthCallback(); // sync in implicit flow
+
+    if (success) {
+      console.log('[LH Map] SF connected successfully.');
+      setSFStatus('connected', 'Salesforce Connected ✓');
+      hideBanner();
+    } else {
+      console.warn('[LH Map] SF auth failed. See errors above.');
+      setSFStatus('error', 'Auth Failed — Retry');
+      showBanner();
+    }
+    return;
+  }
+
+  // ── NORMAL LOAD PATH ─────────────────────────────────────────────────────
+  if (isLoggedIn()) {
+    console.log('[LH Map] Existing SF token found.');
+    document.getElementById('apimodal').classList.add('hidden');
+    setSFStatus('connected', 'Salesforce Connected ✓');
+    hideBanner();
+    return;
+  }
+
+  // No token, no callback — show API key modal as normal
+  console.log('[LH Map] No SF token. Showing API key modal.');
 });
 </script>
 </body>
