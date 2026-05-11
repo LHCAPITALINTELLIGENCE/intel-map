@@ -442,12 +442,11 @@ async function loadAllData() {
   try {
     // Load properties
     const propQuery = `SELECT Id, Name, TTL_Core__Latitude__c, TTL_Core__Longitude__c,
-      TTL_Core__City__c, TTL_Core__State__c, TTL_Core__Market__c,
+      TTL_Core__State__c, TTL_Core__Market__c,
       TTL_Core__PropertyType__c, TTL_Core__Square_Footage__c,
       TTL_Core__Land_Size_Acres__c, TTL_Core__Status__c,
-      IOS_Allowed__c, IOS_Zoning_Score__c, TTL_Core__Year_Built__c,
-      Owner_Willingness_or_Readiness_to_Sell__c, Current_Tenant__c,
-      Fenced_Storage__c
+      TTL_Core__Year_Built__c,
+      Owner_Willingness_or_Readiness_to_Sell__c, Current_Tenant__c
       FROM TTL_Core__Property__c
       WHERE TTL_Core__Latitude__c != null AND IsDeleted = false
       LIMIT 500`;
@@ -621,9 +620,8 @@ function applyFilters() {
 
 function isIOSProperty(p) {
   const type = (p.TTL_Core__PropertyType__c || '').toLowerCase();
-  const ios  = (p.IOS_Allowed__c || '').toLowerCase();
-  const fence = (p.Fenced_Storage__c || '').toLowerCase();
-  return type.includes('ios') || ios === 'yes' || ios === 'conditional' || fence === 'yes';
+  const name = (p.Name || '').toLowerCase();
+  return type.includes('ios') || name.includes('ios') || name.includes('outdoor storage');
 }
 
 function matchesSignal(prop, comp, signal) {
