@@ -423,7 +423,8 @@ function handleSFClick() {
 
 // ── SF QUERY ────────────────────────────────────────────────────────────────
 async function querySF(soql) {
-  const token = getToken(), orgUrl = getOrgUrl();
+  const token = getToken();
+  const orgUrl = getOrgUrl() || 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
   if (!token) throw new Error('Not authenticated');
   const res = await fetch(`${orgUrl}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`, {
     headers: { Authorization: `Bearer ${token}` }
@@ -938,8 +939,4 @@ document.addEventListener('DOMContentLoaded', () => {
     loadAllData();
     return;
   }
-  // Show API modal — SF connect available after
-});
-</script>
-</body>
-</html>
+  // Sh
