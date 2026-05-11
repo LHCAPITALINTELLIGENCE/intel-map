@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LH Capital — Intelligence Map</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+:root {
+  --navy:#05014B;--navy2:#0C1C52;--gold:#FFC000;--white:#ffffff;
+  --off:#F5F7FB;--lt:#E4E8F2;--mid:#8892AA;--dark:#2D3A4A;
+  --sale:#D63B0A;--lease:#0A62D4;--prop:#059669;
+  --shadow:0 4px 24px rgba(5,1,75,0.13);--shadowlg:0 12px 48px rgba(5,1,75,0.18);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;font-family:'Inter',-apple-system,sans-serif;background:var(--off);overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* MAP */
+#map{position:fixed;inset:0;z-index:1}
+.leaflet-popup-content-wrapper{border-radius:3px!important;box-shadow:var(--shadowlg)!important;border:1px solid var(--lt)!important}
+.leaflet-popup-content{margin:0!important}
+.leaflet-popup{z-index:1100!important}
+
+/* TOP BAR */
+#topbar{position:fixed;top:0;left:0;right:0;z-index:1000;height:54px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;padding:0 20px;box-shadow:0 2px 16px rgba(5,1,75,0.35)}
+.tb-left{display:flex;align-items:center;gap:11px}
+.tb-mark{width:28px;height:28px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:var(--navy);flex-shrink:0}
+.tb-name{font-size:13px;font-weight:600;color:#fff}
+.tb-name span{color:var(--gold)}
+#sf-status{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:5px 12px;border:1px solid;cursor:pointer;transition:opacity .15s}
+#sf-status.on{color:#22c55e;border-color:rgba(34,197,94,.35);background:rgba(34,197,94,.08)}
+#sf-status.off{color:rgba(255,255,255,.45);border-color:rgba(255,255,255,.15)}
+#sf-status:hover{opacity:.75}
+
+/* ANTHROPIC KEY MODAL */
+#key-modal{position:fixed;inset:0;z-index:9000;background:rgba(5,1,75,.88);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center}
+#key-box{background:#0d0d24;border:1px solid rgba(255,192,0,.2);padding:40px 36px;width:440px;max-width:calc(100vw - 32px);box-shadow:0 32px 96px rgba(0,0,0,.6)}
+.km-logo{display:flex;align-items:center;gap:10px;margin-bottom:26px}
+.km-mark{width:34px;height:34px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;color:var(--navy)}
+.km-brand{font-size:14px;font-weight:700;color:#fff}
+.km-brand span{color:var(--gold)}
+.km-title{font-size:18px;font-weight:700;color:#fff;margin-bottom:8px}
+.km-sub{font-size:13px;color:rgba(255,255,255,.5);line-height:1.65;margin-bottom:26px}
+.km-lbl{font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.5);display:block;margin-bottom:7px}
+.km-inp{width:100%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-size:13px;padding:12px 13px;outline:none;font-family:'Courier New',monospace;transition:border-color .2s}
+.km-inp:focus{border-color:var(--gold)}
+.km-inp::placeholder{color:rgba(255,255,255,.2)}
+#km-err{font-size:12px;color:#f87171;margin-top:8px;display:none;padding:7px 10px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.2)}
+.km-btn{width:100%;margin-top:14px;padding:13px;font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
+.km-btn.pri{background:var(--gold);color:var(--navy)}
+.km-btn.ghost{background:transparent;color:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.12);margin-top:8px}
+.km-btn:hover{opacity:.82}
+.km-btn:disabled{opacity:.4;cursor:not-allowed}
+.km-note{font-size:11px;color:rgba(255,255,255,.3);margin-top:16px;line-height:1.6;padding-top:14px;border-top:1px solid rgba(255,255,255,.06)}
+
+/* SF CONNECT MODAL */
+#sf-modal{position:fixed;inset:0;z-index:8000;background:rgba(5,1,75,.82);backdrop-filter:blur(5px);display:none;align-items:center;justify-content:center}
+#sf-box{background:var(--white);padding:40px 36px;width:400px;max-width:calc(100vw - 32px);box-shadow:var(--shadowlg);text-align:center}
+.sf-title{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px}
+.sf-sub{font-size:13px;color:var(--mid);line-height:1.65;margin-bottom:28px}
+#sf-conn-btn{width:100%;padding:14px;background:var(--navy);color:var(--gold);font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;margin-bottom:10px;transition:opacity .15s}
+#sf-conn-btn:hover{opacity:.88}
+.sf-skip{font-size:11px;color:var(--mid);cursor:pointer}
+.sf-skip:hover{color:var(--dark)}
+.sf-note{font-size:11px;color:var(--mid);margin-top:16px;line-height:1.5}
+
+/* VOICE BAR */
+#voicebar{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);z-index:1000;display:flex;align-items:center;background:var(--white);border-radius:50px;box-shadow:var(--shadowlg),0 2px 8px rgba(5,1,75,.08);border:1px solid var(--lt);min-width:520px;max-width:min(740px,calc(100vw - 40px));overflow:hidden}
+#q-inp{flex:1;border:none;outline:none;font-family:'Inter',sans-serif;font-size:14px;color:var(--dark);padding:17px 22px;background:transparent;caret-color:var(--navy)}
+#q-inp::placeholder{color:var(--mid)}
+#srch-btn{width:50px;height:54px;border:none;cursor:pointer;flex-shrink:0;background:rgba(5,1,75,.06);display:flex;align-items:center;justify-content:center;transition:background .15s}
+#srch-btn:hover{background:rgba(5,1,75,.1)}
+#mic-btn{width:54px;height:54px;border:none;cursor:pointer;flex-shrink:0;background:var(--navy);display:flex;align-items:center;justify-content:center;border-radius:0 50px 50px 0;transition:background .2s}
+#mic-btn:hover{background:var(--navy2)}
+#mic-btn.listening{background:#dc2626;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+
+/* VOICE STATUS */
+#vstatus{position:fixed;bottom:96px;left:50%;transform:translateX(-50%);z-index:1000;background:var(--navy);color:var(--gold);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:8px 20px;border-radius:24px;display:none;white-space:nowrap;box-shadow:var(--shadow)}
+
+/* RESULTS PANEL */
+#results{position:fixed;top:64px;left:14px;bottom:100px;z-index:900;width:296px;background:var(--white);border:1px solid var(--lt);box-shadow:var(--shadow);display:none;flex-direction:column}
+.rp-hdr{padding:14px 16px;border-bottom:1px solid var(--lt);flex-shrink:0}
+.rp-q{font-size:11px;font-style:italic;color:var(--mid);margin-bottom:6px;line-height:1.45}
+.rp-meta{display:flex;align-items:center;justify-content:space-between}
+.rp-cnt{font-size:13px;font-weight:700;color:var(--navy)}
+.rp-clr{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);cursor:pointer;padding:4px 8px;border:1px solid var(--lt);transition:all .15s}
+.rp-clr:hover{color:var(--dark);border-color:var(--mid)}
+#rlist{overflow-y:auto;flex:1}
+#rlist::-webkit-scrollbar{width:4px}
+#rlist::-webkit-scrollbar-thumb{background:var(--lt)}
+.ri{padding:11px 16px;border-bottom:1px solid var(--lt);cursor:pointer;transition:background .1s}
+.ri:hover{background:var(--off)}
+.ri:last-child{border-bottom:none}
+.ri-badge{display:inline-block;font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;margin-bottom:5px;border-radius:2px}
+.ri-badge.sale{background:rgba(214,59,10,.1);color:var(--sale)}
+.ri-badge.lease{background:rgba(10,98,212,.1);color:var(--lease)}
+.ri-badge.prop{background:rgba(5,150,105,.1);color:var(--prop)}
+.ri-name{font-size:12px;font-weight:600;color:var(--dark);line-height:1.3;margin-bottom:2px}
+.ri-meta{font-size:11px;color:var(--mid)}
+.ri-val{font-size:13px;font-weight:700;color:var(--navy);margin-top:3px}
+.rp-ftr{padding:12px 16px;border-top:1px solid var(--lt);flex-shrink:0}
+#bov-btn{width:100%;padding:11px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
+#bov-btn:hover{opacity:.88}
+
+/* TOAST */
+#toast{position:fixed;top:68px;left:50%;transform:translateX(-50%);z-index:2000;background:var(--navy);color:var(--gold);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:9px 22px;border-radius:24px;display:none;white-space:nowrap;box-shadow:var(--shadow)}
+
+/* EMPTY STATE */
+#empty{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:500;text-align:center;pointer-events:none}
+.es-icon{font-size:48px;margin-bottom:16px;opacity:.2}
+.es-title{font-size:16px;font-weight:700;color:var(--navy);opacity:.25;margin-bottom:6px}
+.es-sub{font-size:13px;color:var(--mid);opacity:.4}
+
+/* LEGEND */
+#legend{position:fixed;bottom:96px;right:14px;z-index:900;background:var(--white);border:1px solid var(--lt);padding:10px 14px;box-shadow:var(--shadow)}
+.lg-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:11px;color:var(--dark)}
+.lg-row:last-child{margin-bottom:0}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+
+/* POPUP */
+.pop{font-family:'Inter',sans-serif;padding:14px 16px;min-width:200px;max-width:270px}
+.pop-type{font-size:9px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}
+.pop-type.sale{color:var(--sale)}.pop-type.lease{color:var(--lease)}.pop-type.prop{color:var(--prop)}
+.pop-name{font-size:13px;font-weight:700;color:var(--navy);margin-bottom:8px;line-height:1.3}
+.pop-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px 14px}
+.pop-fl{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mid);margin-bottom:1px}
+.pop-fv{font-size:12px;font-weight:600;color:var(--dark)}
+
+/* BOV MODAL */
+#bov-modal{position:fixed;inset:0;z-index:3000;background:rgba(5,1,75,.65);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center}
+#bov-box{background:var(--white);width:540px;max-width:calc(100vw - 32px);max-height:88vh;display:flex;flex-direction:column;box-shadow:0 24px 80px rgba(5,1,75,.3)}
+.bov-hdr{padding:20px 24px;background:var(--navy);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.bov-ht{font-size:14px;font-weight:700;color:#fff}
+.bov-x{font-size:22px;color:rgba(255,255,255,.45);cursor:pointer;line-height:1}
+.bov-x:hover{color:#fff}
+.bov-body{padding:22px 24px;overflow-y:auto;flex:1}
+.bov-lbl{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--mid);display:block;margin-bottom:6px;margin-top:14px}
+.bov-lbl:first-child{margin-top:0}
+.bov-inp{width:100%;border:1px solid var(--lt);background:var(--off);font-family:'Inter',sans-serif;font-size:13px;color:var(--dark);padding:10px 12px;outline:none;transition:border-color .2s}
+.bov-inp:focus{border-color:var(--navy);background:#fff}
+.bov-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bov-ftr{padding:16px 24px;border-top:1px solid var(--lt);display:flex;gap:10px;flex-shrink:0}
+#bov-gen{flex:1;padding:12px;background:var(--navy);color:var(--gold);font-size:11px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;border:none;cursor:pointer;transition:opacity .15s}
+#bov-gen:hover{opacity:.88}
+#bov-gen:disabled{opacity:.4;cursor:not-allowed}
+.bov-can{padding:12px 16px;background:transparent;color:var(--mid);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--lt);cursor:pointer}
+#bov-msg{font-size:12px;color:var(--navy);margin-top:10px;display:none;padding:9px 11px;background:var(--off);border:1px solid var(--lt);line-height:1.5}
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div id="empty"><div class="es-icon">🗺</div><div class="es-title">Intelligence Map</div><div class="es-sub">Speak or type a query to see results</div></div>
+
+<div id="topbar">
+  <div class="tb-left">
+    <div class="tb-mark">LH</div>
+    <div class="tb-name">LH <span>Capital</span> — Intelligence Map</div>
+  </div>
+  <div id="sf-status" class="off" onclick="handleSFClick()">Connect Salesforce</div>
+</div>
+
+<div id="toast"></div>
+
+<div id="results">
+  <div class="rp-hdr">
+    <div class="rp-q" id="rp-q"></div>
+    <div class="rp-meta"><div class="rp-cnt" id="rp-cnt">0 results</div><div class="rp-clr" onclick="clearAll()">Clear</div></div>
+  </div>
+  <div id="rlist"></div>
+  <div class="rp-ftr"><button id="bov-btn" onclick="openBOV()">📄 Create BOV</button></div>
+</div>
+
+<div id="legend">
+  <div class="lg-row"><div class="dot" style="background:var(--sale)"></div>Sale Comp</div>
+  <div class="lg-row"><div class="dot" style="background:var(--lease)"></div>Lease Comp</div>
+  <div class="lg-row"><div class="dot" style="background:var(--prop)"></div>Property</div>
+</div>
+
+<div id="vstatus"></div>
+<div id="voicebar">
+  <input type="text" id="q-inp" placeholder='Try: "IOS properties in Tampa" or "lease comps near Winter Garden FL last 2 years"' autocomplete="off">
+  <button id="srch-btn" onclick="runQuery()">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--navy)" stroke-width="2.5" stroke-linecap="round"><circle cx="11" cy="11" r="6"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+  </button>
+  <button id="mic-btn" onclick="toggleMic()">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0014 0"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+  </button>
+</div>
+
+<div id="key-modal">
+  <div id="key-box">
+    <div class="km-logo"><div class="km-mark">LH</div><div class="km-brand">LH <span>Capital</span> Partners</div></div>
+    <div class="km-title">Intelligence Map</div>
+    <div class="km-sub">Enter your Anthropic API key to enable voice query interpretation. Stored in session memory only — cleared when browser closes.</div>
+    <label class="km-lbl">Anthropic API Key</label>
+    <input type="password" id="km-key" class="km-inp" placeholder="sk-ant-api03-..." autocomplete="off" spellcheck="false">
+    <div id="km-err"></div>
+    <button class="km-btn pri" id="km-btn" onclick="activateKey()">Activate &amp; Open Map</button>
+    <button class="km-btn ghost" onclick="skipKey()">Skip — View Map Without AI</button>
+    <div class="km-note">Sent only to api.anthropic.com via HTTPS. Never saved to disk.</div>
+  </div>
+</div>
+
+<div id="sf-modal">
+  <div id="sf-box">
+    <div class="sf-title">Connect to Salesforce</div>
+    <div class="sf-sub">Sign in with your Salesforce account to query your comp and property database live.</div>
+    <button id="sf-conn-btn" onclick="loginSF()">Connect with Salesforce</button>
+    <div class="sf-skip" onclick="closeSFModal()">Not now</div>
+    <div class="sf-note">Uses your existing SF login. No separate password. Connection clears when browser closes.</div>
+  </div>
+</div>
+
+<div id="bov-modal">
+  <div id="bov-box">
+    <div class="bov-hdr"><div class="bov-ht">Create Broker Opinion of Value</div><div class="bov-x" onclick="closeBOV()">×</div></div>
+    <div class="bov-body">
+      <label class="bov-lbl">Subject Property Address</label>
+      <input type="text" class="bov-inp" id="bov-addr" placeholder="1234 Industrial Dr, Winter Garden, FL 34787">
+      <div class="bov-2">
+        <div><label class="bov-lbl">Building Size (SF)</label><input type="text" class="bov-inp" id="bov-sf" placeholder="15,000"></div>
+        <div><label class="bov-lbl">Year Built</label><input type="text" class="bov-inp" id="bov-yr" placeholder="2004"></div>
+      </div>
+      <div class="bov-2">
+        <div><label class="bov-lbl">Asking Price or Rent</label><input type="text" class="bov-inp" id="bov-ask" placeholder="$1,450,000 or $9.75 PSF"></div>
+        <div><label class="bov-lbl">Property Subtype</label><input type="text" class="bov-inp" id="bov-sub" placeholder="Small Bay Warehouse"></div>
+      </div>
+      <label class="bov-lbl">Notes</label>
+      <input type="text" class="bov-inp" id="bov-notes" placeholder="IOS yard, NNN lease, 3 dock doors, etc.">
+      <div id="bov-msg"></div>
+    </div>
+    <div class="bov-ftr"><button id="bov-gen" onclick="generateBOV()">Generate BOV Document</button><button class="bov-can" onclick="closeBOV()">Cancel</button></div>
+  </div>
+</div>
+
+<script>
+// ★ UPDATE THIS WHEN YOU HAVE THE CONSUMER KEY FROM SF ★
+const CONSUMER_KEY = '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
+const SF_ORG       = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
+const SF_LOGIN     = 'https://login.salesforce.com';
+const REDIRECT_URI = 'https://lhcapitalintelligence.github.io/intel-map/';
+const SF_API_VER   = 'v60.0';
+const ANTH_URL     = 'https://api.anthropic.com/v1/messages';
+const MODEL        = 'claude-sonnet-4-20250514';
+const NOM_URL      = 'https://nominatim.openstreetmap.org/search';
+
+let MAP, MARKS, RADLYR, RESULTS=[], IS_LISTENING=false, SPEECH=null;
+
+const AK='lh_ak', STK='lh_stk', SINST='lh_sinst', SPKCE='lh_spkce';
+const getAK=()=>sessionStorage.getItem(AK);
+const getSTK=()=>sessionStorage.getItem(STK);
+const getSInst=()=>sessionStorage.getItem(SINST)||SF_ORG;
+const hasAK=()=>!!getAK();
+const hasSTK=()=>!!getSTK();
+function clearSF(){[STK,SINST,SPKCE].forEach(k=>sessionStorage.removeItem(k))}
+
+// MAP INIT
+function initMap(){
+  MAP=L.map('map',{center:[27.9,-81.8],zoom:8,zoomControl:false});
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© CARTO',subdomains:'abcd',maxZoom:20}).addTo(MAP);
+  L.control.zoom({position:'bottomright'}).addTo(MAP);
+  MARKS=L.layerGroup().addTo(MAP);
+  RADLYR=L.layerGroup().addTo(MAP);
+}
+
+// ANTHROPIC KEY
+async function activateKey(){
+  const k=document.getElementById('km-key').value.trim();
+  const err=document.getElementById('km-err'),btn=document.getElementById('km-btn');
+  err.style.display='none';
+  if(!k){showKErr('Enter your Anthropic API key.');return}
+  if(!k.startsWith('sk-ant-')){showKErr('Key must start with sk-ant-');return}
+  btn.disabled=true;btn.textContent='Validating...';
+  try{
+    const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':k,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:5,messages:[{role:'user',content:'ok'}]})});
+    if(r.status===401)throw new Error('Invalid API key.');
+    sessionStorage.setItem(AK,k);closeKeyModal();
+  }catch(e){showKErr(e.message);btn.disabled=false;btn.textContent='Activate & Open Map'}
+}
+function skipKey(){closeKeyModal()}
+function closeKeyModal(){document.getElementById('key-modal').style.display='none'}
+function showKErr(m){const e=document.getElementById('km-err');e.textContent=m;e.style.display='block'}
+
+// SF OAUTH PKCE
+async function genPKCE(){
+  const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const arr=new Uint8Array(64);crypto.getRandomValues(arr);
+  const verifier=Array.from(arr).map(b=>chars[b%chars.length]).join('');
+  const enc=new TextEncoder().encode(verifier);
+  const digest=await crypto.subtle.digest('SHA-256',enc);
+  const challenge=btoa(String.fromCharCode(...new Uint8Array(digest))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return{verifier,challenge};
+}
+
+async function loginSF(){
+  closeSFModal();
+  const{verifier,challenge}=await genPKCE();
+  sessionStorage.setItem(SPKCE,verifier);
+  const p=new URLSearchParams({response_type:'code',client_id:CONSUMER_KEY,redirect_uri:REDIRECT_URI,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
+  window.location.href=`${SF_LOGIN}/services/oauth2/authorize?${p}`;
+}
+
+async function handleCallback(){
+  const p=new URLSearchParams(window.location.search);
+  const code=p.get('code');
+  if(!code)return false;
+  const verifier=sessionStorage.getItem(SPKCE);
+  if(!verifier)return false;
+  try{
+    const body=new URLSearchParams({grant_type:'authorization_code',client_id:CONSUMER_KEY,redirect_uri:REDIRECT_URI,code,code_verifier:verifier});
+    const r=await fetch(`${SF_LOGIN}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    if(d.access_token){
+      sessionStorage.setItem(STK,d.access_token);
+      sessionStorage.setItem(SINST,d.instance_url||SF_ORG);
+      window.history.replaceState({},'',window.location.pathname);
+      return true;
+    }
+  }catch(e){console.error('SF callback:',e)}
+  return false;
+}
+
+function handleSFClick(){
+  if(hasSTK()){if(confirm('Disconnect from Salesforce?')){clearSF();syncSF()}}
+  else{document.getElementById('sf-modal').style.display='flex'}
+}
+function closeSFModal(){document.getElementById('sf-modal').style.display='none'}
+function syncSF(){
+  const el=document.getElementById('sf-status');
+  if(hasSTK()){el.textContent='✓ Salesforce Connected';el.className='on'}
+  else{el.textContent='Connect Salesforce';el.className='off'}
+}
+
+// SF QUERY
+async function sfQuery(soql){
+  const token=getSTK(),inst=getSInst();
+  if(!token)throw new Error('Not connected to Salesforce.');
+  const r=await fetch(`${inst}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`,{headers:{Authorization:`Bearer ${token}`}});
+  if(r.status===401){clearSF();syncSF();throw new Error('Salesforce session expired. Please reconnect.')}
+  if(!r.ok)throw new Error(`Salesforce error ${r.status}`);
+  return(await r.json()).records||[];
+}
+
+// VOICE
+function toggleMic(){
+  if(!('webkitSpeechRecognition'in window)&&!('SpeechRecognition'in window)){showToast('Voice requires Chrome',true);return}
+  IS_LISTENING?stopListen():startListen();
+}
+function startListen(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  SPEECH=new SR();SPEECH.continuous=false;SPEECH.interimResults=true;SPEECH.lang='en-US';
+  SPEECH.onstart=()=>{IS_LISTENING=true;document.getElementById('mic-btn').classList.add('listening');showVS('🎤 Listening...')};
+  SPEECH.onresult=e=>{
+    const t=Array.from(e.results).map(r=>r[0].transcript).join('');
+    document.getElementById('q-inp').value=t;
+    if(e.results[e.results.length-1].isFinal){stopListen();setTimeout(runQuery,250)}
+  };
+  SPEECH.onerror=e=>{stopListen();showToast('Voice error: '+e.error,true)};
+  SPEECH.onend=()=>stopListen();
+  SPEECH.start();
+}
+function stopListen(){
+  IS_LISTENING=false;
+  document.getElementById('mic-btn').classList.remove('listening');
+  hideVS();try{if(SPEECH)SPEECH.stop()}catch{}
+}
+function showVS(m){const e=document.getElementById('vstatus');e.textContent=m;e.style.display='block'}
+function hideVS(){document.getElementById('vstatus').style.display='none'}
+
+// QUERY RUNNER
+async function runQuery(){
+  const q=document.getElementById('q-inp').value.trim();
+  if(!q)return;
+  if(!hasSTK()){showToast('Connect Salesforce first — click the button top right',true);return}
+  showToast('Interpreting query...');
+  let c;
+  try{c=hasAK()?await interpretAI(q):interpretLocal(q)}
+  catch(e){c=interpretLocal(q)}
+  showToast(`Searching${c.location?' near '+c.location:''}...`);
+  let center=null;
+  if(c.location)center=await geocode(c.location+' USA');
+  const soql=buildSOQL(c);
+  let recs=[];
+  try{recs=await sfQuery(soql)}
+  catch(e){hideToast();showToast(e.message,true);return}
+  const items=recs.map(r=>norm(r,c.intent)).filter(r=>r.lat&&r.lng&&!isNaN(r.lat));
+  const final=center?items.filter(r=>dist(center.lat,center.lng,r.lat,r.lng)<=(c.radius||10)):items;
+  final.sort((a,b)=>(a._d||0)-(b._d||0));
+  if(center&&c.radius){
+    RADLYR.clearLayers();
+    L.circle([center.lat,center.lng],{radius:c.radius*1609.34,color:'rgba(5,1,75,.3)',weight:1.5,fillColor:'rgba(5,1,75,.04)',fillOpacity:1}).addTo(RADLYR);
+    MAP.setView([center.lat,center.lng],12);
+  }
+  RESULTS=final;
+  plotAll(final);
+  showPanel(final,q);
+  hideToast();
+  document.getElementById('empty').style.display='none';
+}
+
+// AI INTERPRETATION
+async function interpretAI(q){
+  const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getAK(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model:MODEL,max_tokens:300,messages:[{role:'user',content:`Parse this Florida CRE broker query into JSON criteria:\n"${q}"\n\nReturn ONLY JSON:\n{\n  "intent": "comp" or "property",\n  "comp_type": "lease" or "sale" or "both",\n  "location": "city, state" or null,\n  "radius": miles as number,\n  "subtype": ["keyword array"] or [],\n  "ios_only": true or false,\n  "years": number or null\n}\n\nIntent: "comp" if mentions comps/sales/leases/deals. "property" if mentions properties/sites/buildings/IOS/parcels.`}]})});
+  const d=await r.json();
+  const txt=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  return JSON.parse(txt.replace(/```json\n?/g,'').replace(/```\n?/g,'').trim());
+}
+
+function interpretLocal(q){
+  const ql=q.toLowerCase();
+  const intent=(ql.includes('comp')||ql.includes('sale')||ql.includes('lease')||ql.includes('deal'))?'comp':'property';
+  const comp_type=ql.includes('sale comp')||ql.includes('sold')?'sale':ql.includes('lease comp')||ql.includes('leased')?'lease':'both';
+  const rm=ql.match(/(\d+)\s*mi/);const radius=rm?parseInt(rm[1]):5;
+  const ym=ql.match(/last\s+(\d+)\s*year/);const years=ym?parseInt(ym[1]):null;
+  const lm=ql.match(/(?:in|near|around|of)\s+([a-z][a-z\s]+?)(?:\s+fl|\s+florida|\s+last|\s+\d|$)/i);
+  const location=lm?lm[1].trim()+', FL':null;
+  const ios_only=ql.includes('ios')||ql.includes('outdoor storage');
+  const subtype=[];
+  ['small bay','warehouse','flex','distribution','cold storage','light industrial'].forEach(s=>{if(ql.includes(s))subtype.push(s)});
+  return{intent,comp_type,location,radius,years,ios_only,subtype};
+}
+
+function buildSOQL(c){
+  if(c.intent==='property'){
+    let w=`IsDeleted=false AND TTL_Core__Latitude__c!=null`;
+    if(c.ios_only)w+=` AND IOS_Allowed__c='Yes'`;
+    if(c.subtype&&c.subtype.length)w+=` AND (`+c.subtype.map(s=>`TTL_Core__Property_Type__c LIKE '%${s}%'`).join(' OR ')+`)`;
+    return`SELECT Id,Name,TTL_Core__Property_Address__c,TTL_Core__City__c,TTL_Core__State__c,TTL_Core__Latitude__c,TTL_Core__Longitude__c,IOS_Allowed__c,IOS_Zoning_Score__c,Intelligence_Score__c,Owner_Willingness_or_Readiness_to_Sell__c,TTL_Core__Market__c,TTL_Core__Building_Size__c FROM TTL_Core__Property__c WHERE ${w} LIMIT 300`;
+  }
+  let w=`IsDeleted=false AND TTL_Core__Latitude__c!=null`;
+  if(c.comp_type==='sale')w+=` AND RecordType.Name LIKE '%Sale%'`;
+  if(c.comp_type==='lease')w+=` AND RecordType.Name LIKE '%Lease%'`;
+  if(c.subtype&&c.subtype.length)w+=` AND (`+c.subtype.map(s=>`TTL_Core__Property_Subtype__c LIKE '%${s}%'`).join(' OR ')+`)`;
+  if(c.years){const d=new Date();d.setFullYear(d.getFullYear()-c.years);w+=` AND TTL_Core__Close_Deal_Date__c>=${d.toISOString().split('T')[0]}`}
+  return`SELECT Id,Name,TTL_Core__Address__c,TTL_Core__City__c,TTL_Core__State__c,TTL_Core__Latitude__c,TTL_Core__Longitude__c,TTL_Core__Rent_SF_Year__c,TTL_Core__Price_total__c,TTL_Core__Rentable_SF__c,TTL_Core__Gross_SF__c,TTL_Core__Property_Subtype__c,TTL_Core__Property_Type__c,TTL_Core__Close_Deal_Date__c,RecordType.Name FROM TTL_Core__Comp__c WHERE ${w} LIMIT 300`;
+}
+
+function norm(r,intent){
+  if(intent==='property')return{id:r.Id,type:'prop',name:r.Name||'',addr:[r.TTL_Core__Property_Address__c,r.TTL_Core__City__c,r.TTL_Core__State__c].filter(Boolean).join(', '),lat:parseFloat(r.TTL_Core__Latitude__c),lng:parseFloat(r.TTL_Core__Longitude__c),sf:r.TTL_Core__Building_Size__c,ios:r.IOS_Allowed__c,score:r.Intelligence_Score__c,market:r.TTL_Core__Market__c,willingness:r.Owner_Willingness_or_Readiness_to_Sell__c};
+  const type=(r.RecordType?.Name||'').toLowerCase().includes('sale')?'sale':'lease';
+  return{id:r.Id,type,name:r.Name||'',addr:[r.TTL_Core__Address__c,r.TTL_Core__City__c,r.TTL_Core__State__c].filter(Boolean).join(', '),lat:parseFloat(r.TTL_Core__Latitude__c),lng:parseFloat(r.TTL_Core__Longitude__c),price:r.TTL_Core__Price_total__c,rent:r.TTL_Core__Rent_SF_Year__c,sf:r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c,subtype:r.TTL_Core__Property_Subtype__c,date:r.TTL_Core__Close_Deal_Date__c};
+}
+
+// GEOCODING
+async function geocode(q){
+  try{const r=await fetch(`${NOM_URL}?q=${encodeURIComponent(q)}&format=json&limit=1&countrycodes=us`);const d=await r.json();if(d?.[0])return{lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)}}catch{}return null;
+}
+function dist(la1,ln1,la2,ln2){const R=3958.8,dL=(la2-la1)*Math.PI/180,dl=(ln2-ln1)*Math.PI/180,a=Math.sin(dL/2)**2+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dl/2)**2;return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))}
+
+// PLOTTING
+const CC={sale:'#D63B0A',lease:'#0A62D4',prop:'#059669'};
+function plotAll(items){
+  MARKS.clearLayers();
+  items.forEach(r=>{
+    if(isNaN(r.lat)||isNaN(r.lng))return;
+    const icon=L.divIcon({className:'',html:`<div style="width:12px;height:12px;background:${CC[r.type]};border-radius:50%;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25)"></div>`,iconSize:[12,12],iconAnchor:[6,6],popupAnchor:[0,-8]});
+    L.marker([r.lat,r.lng],{icon}).bindPopup(mkPop(r)).addTo(MARKS);
+  });
+}
+
+function mkPop(r){
+  const lbl=r.type==='sale'?'Sale Comp':r.type==='lease'?'Lease Comp':'Property';
+  const val=r.type==='sale'?(r.price?`$${Number(r.price).toLocaleString()}`:'—'):r.type==='lease'?(r.rent?`$${r.rent} PSF/yr`:'—'):(r.ios==='Yes'?'✓ IOS':'—');
+  return`<div class="pop"><div class="pop-type ${r.type}">${lbl}</div><div class="pop-name">${x(r.addr||r.name)}</div><div class="pop-grid"><div><div class="pop-fl">${r.type==='prop'?'IOS':'Value'}</div><div class="pop-fv">${x(val)}</div></div><div><div class="pop-fl">Size</div><div class="pop-fv">${r.sf?Number(r.sf).toLocaleString()+' SF':'—'}</div></div>${r.subtype?`<div><div class="pop-fl">Subtype</div><div class="pop-fv">${x(r.subtype)}</div></div>`:''} ${r.date?`<div><div class="pop-fl">Date</div><div class="pop-fv">${r.date}</div></div>`:''}</div></div>`;
+}
+function x(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// RESULTS PANEL
+function showPanel(items,q){
+  document.getElementById('results').style.display='flex';
+  document.getElementById('rp-q').textContent=`"${q}"`;
+  document.getElementById('rp-cnt').textContent=`${items.length} result${items.length!==1?'s':''}`;
+  const list=document.getElementById('rlist');list.innerHTML='';
+  if(!items.length){list.innerHTML='<div style="padding:20px 16px;font-size:12px;color:#8892AA;text-align:center">No results. Try broader terms or larger radius.</div>';return}
+  items.slice(0,60).forEach(r=>{
+    const el=document.createElement('div');el.className='ri';
+    const lbl=r.type==='sale'?'Sale':r.type==='lease'?'Lease':'Property';
+    const val=r.type==='sale'?(r.price?'$'+Number(r.price).toLocaleString():''):r.type==='lease'?(r.rent?'$'+r.rent+' PSF':''):(r.ios==='Yes'?'IOS ✓':'');
+    el.innerHTML=`<span class="ri-badge ${r.type}">${lbl}</span><div class="ri-name">${r.addr||r.name||'—'}</div><div class="ri-meta">${r.sf?Number(r.sf).toLocaleString()+' SF':''}</div>${val?`<div class="ri-val">${val}</div>`:''}`;
+    el.onclick=()=>{if(r.lat)MAP.setView([r.lat,r.lng],15)};
+    list.appendChild(el);
+  });
+}
+
+function clearAll(){MARKS.clearLayers();RADLYR.clearLayers();RESULTS=[];document.getElementById('results').style.display='none';document.getElementById('q-inp').value='';document.getElementById('empty').style.display='block'}
+
+// BOV
+function openBOV(){document.getElementById('bov-modal').style.display='flex'}
+function closeBOV(){document.getElementById('bov-modal').style.display='none'}
+async function generateBOV(){
+  if(!hasAK()){showBovMsg('Anthropic key required.');return}
+  const addr=document.getElementById('bov-addr').value.trim();
+  if(!addr){showBovMsg('Enter subject property address.');return}
+  const btn=document.getElementById('bov-gen');btn.disabled=true;btn.textContent='Generating...';
+  showBovMsg('Writing BOV from comps on map...');
+  const sales=RESULTS.filter(r=>r.type==='sale').slice(0,10);
+  const leases=RESULTS.filter(r=>r.type==='lease').slice(0,10);
+  const cb=[sales.length?'SALE COMPS:\n'+sales.map(c=>`- ${c.addr} | ${c.sf?Number(c.sf).toLocaleString()+' SF':''} | ${c.price?'$'+Number(c.price).toLocaleString():''} | ${c.date||''}`).join('\n'):'',leases.length?'LEASE COMPS:\n'+leases.map(c=>`- ${c.addr} | ${c.sf?Number(c.sf).toLocaleString()+' SF':''} | ${c.rent?'$'+c.rent+' PSF/yr':''} | ${c.date||''}`).join('\n'):''].filter(Boolean).join('\n\n');
+  const prompt=`You are a senior industrial real estate broker at LH Capital Partners. Write a complete professional BOV.\n\nSUBJECT:\nAddress: ${addr}\nSF: ${document.getElementById('bov-sf').value||'unknown'}\nYear: ${document.getElementById('bov-yr').value||'unknown'}\nAsking: ${document.getElementById('bov-ask').value||'TBD'}\nSubtype: ${document.getElementById('bov-sub').value||'Industrial'}\nNotes: ${document.getElementById('bov-notes').value||'none'}\n\nMARKET COMPS:\n${cb||'No comps loaded.'}\n\nWrite: Executive Summary, Market Overview, Comp tables, Valuation with specific numbers, Conclusion. Broker voice — direct, no jargon. Return HTML body only. Colors: navy #05014B, gold #FFC000.`;
+  try{
+    const r=await fetch(ANTH_URL,{method:'POST',headers:{'Content-Type':'application/json','x-api-key':getAK(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:MODEL,max_tokens:4000,messages:[{role:'user',content:prompt}]})});
+    const d=await r.json();
+    const html=(d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+    const w=window.open('','_blank');
+    w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>BOV — ${addr}</title><style>body{font-family:-apple-system,sans-serif;max-width:900px;margin:40px auto;padding:0 32px 80px;color:#2D3A4A}table{width:100%;border-collapse:collapse;margin:16px 0}th{background:#05014B;color:#fff;padding:8px 12px;font-size:12px;text-align:left}td{padding:8px 12px;border-bottom:1px solid #E4E8F2;font-size:13px}@media print{body{margin:0;padding:20px}}</style></head><body><div style="background:#05014B;padding:22px 32px;margin:0 -32px 32px;display:flex;align-items:center;gap:14px"><div style="width:34px;height:34px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:11px;color:#05014B">LH</div><div><div style="font-size:15px;font-weight:700;color:#fff">Broker Opinion of Value</div><div style="font-size:12px;color:rgba(255,255,255,.55);margin-top:2px">${addr} · LH Capital Partners · ${new Date().toLocaleDateString('en-US',{month:'long',day:'numeric',year:'numeric'})}</div></div><button onclick="window.print()" style="margin-left:auto;padding:8px 18px;background:#FFC000;color:#05014B;border:none;font-weight:700;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer">Print / PDF</button></div>${html}</body></html>`);
+    w.document.close();closeBOV();
+  }catch(e){showBovMsg('Error: '+e.message)}
+  finally{btn.disabled=false;btn.textContent='Generate BOV Document'}
+}
+function showBovMsg(m){const e=document.getElementById('bov-msg');e.textContent=m;e.style.display='block'}
+
+// TOAST
+let TT;
+function showToast(m,isErr){const t=document.getElementById('toast');t.textContent=m;t.style.background=isErr?'#B91C1C':'var(--navy)';t.style.display='block';clearTimeout(TT);if(!isErr)TT=setTimeout(hideToast,3000)}
+function hideToast(){document.getElementById('toast').style.display='none'}
+
+// INIT
+document.addEventListener('DOMContentLoaded',async()=>{
+  initMap();
+  const authed=await handleCallback();
+  if(authed){syncSF();showToast('✓ Salesforce connected')}
+  syncSF();
+  if(!hasAK())document.getElementById('key-modal').style.display='flex';
+  document.getElementById('q-inp').addEventListener('keydown',e=>{if(e.key==='Enter')runQuery()});
+  document.getElementById('km-key').addEventListener('keydown',e=>{if(e.key==='Enter')activateKey()});
+});
+</script>
+</body>
+</html>
