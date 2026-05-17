@@ -1483,4 +1483,133 @@ const INTEL_SIGNALS = [
     date:'Jan 8, 2026',
     headline:'Brennan Investment Group Acquires Tampa Shallow-Bay Portfolio',
     tip:"Active buyer in Tampa shallow-bay. Add to acquisition prospect list - may have appetite for more.",
-    url:'https://tbbwmag.com/2026/01/08/multi-state-industrial-portfolio-includes-ta
+    url:'https://tbbwmag.com/2026/01/08/multi-state-industrial-portfolio-includes-tampa-assets/',
+    source:'Tampa Bay Business Wire',
+    markets:['Tampa']
+  },
+  {
+    id:'s4',
+    tag:'Tenant',
+    color:'#6366f1',
+    score:'red',
+    scoreLabel:'🔴 Call Today',
+    date:'Apr 2026',
+    headline:'Alterra IOS Acquires 5 Central Florida IOS Properties',
+    tip:"Alterra is aggressively buying in your backyard. Any owner in Central FL IOS market should hear from you before Alterra does.",
+    url:'https://alterraios.com',
+    source:'Alterra IOS',
+    markets:['Orlando','Tampa']
+  },
+  {
+    id:'s5',
+    tag:'Market',
+    color:'#3b82f6',
+    score:'yellow',
+    scoreLabel:'🟡 Monitor',
+    date:'May 2026',
+    headline:'FL Industrial Vacancy Tightens to 4.1% - Rent Growth Accelerating',
+    tip:"Use this on every BOV call. Market is tightening - owners who wait 12 months may leave 15-20% on the table.",
+    url:'https://www.costar.com/article/florida-industrial-market',
+    source:'CoStar Market Report',
+    markets:['All Florida']
+  },
+  {
+    id:'s6',
+    tag:'IOS',
+    color:'#FFC000',
+    score:'red',
+    scoreLabel:'🔴 Call Today',
+    date:'May 2026',
+    headline:'IOS Cap Rates Compress to 5.2% Nationally - FL Premium at 5.8%',
+    tip:"Owners who could not get their number 18 months ago can now. Revisit stale leads.",
+    url:'https://www.cbre.com/insights/reports/us-industrial-outdoor-storage-outlook',
+    source:'CBRE IOS Outlook',
+    markets:['All Florida']
+  }
+];
+
+let intelFeedOpen = false;
+
+function toggleIntelFeed() {
+  const panel = document.getElementById('intel-feed-panel');
+  const btn = document.getElementById('intel-feed-toggle');
+  intelFeedOpen = !intelFeedOpen;
+  panel.style.width = intelFeedOpen ? '320px' : '0';
+  if(btn) btn.style.background = intelFeedOpen ? 'rgba(255,192,0,0.3)' : 'rgba(255,192,0,0.15)';
+  if(intelFeedOpen) renderIntelFeed();
+}
+
+function renderIntelFeed() {
+  const el = document.getElementById('intel-feed-list');
+  if(!el) return;
+  el.innerHTML = INTEL_SIGNALS.map(s => `
+    <div onclick="intelSignalClick('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:12px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='rgba(255,192,0,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:${s.color}22;color:${s.color};padding:2px 7px;border-radius:2px">${s.tag}</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.3)">${s.date}</span>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#fff;line-height:1.45;margin-bottom:8px">${s.headline}</div>
+      <div style="font-size:10px;color:#FFC000;font-style:italic;line-height:1.5;margin-bottom:8px;padding-left:8px;border-left:2px solid rgba(255,192,0,0.3)">▶ ${s.tip}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:700">${s.scoreLabel}</span>
+        <a href="${s.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:9px;color:rgba(255,255,255,0.3);text-decoration:underline">${s.source} ↗</a>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        ${s.markets.map(m=>`<span style="font-size:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);padding:2px 6px">${m}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function intelSignalClick(id) {
+  const s = INTEL_SIGNALS.find(x=>x.id===id);
+  if(!s) return;
+  logActivity('Signal Viewed', s.headline);
+  // Filter map to matching markets
+  if(s.markets.includes('All Florida')) {
+    mapFilter(); // show all
+  } else {
+    const q = s.markets[0];
+    const searchEl = document.getElementById('map-search');
+    if(searchEl){ searchEl.value = q; mapFilter(); }
+  }
+  // Flash pins
+  setTimeout(()=>{
+    mapMarkers.forEach(m=>{
+      const el = m.getElement ? m.getElement() : null;
+      if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); }
+    });
+  }, 200);
+}
+
+// ═══════════════════════════════════════════════════════
+// EXPLICIT GLOBAL EXPORTS — ensures onclick handlers work
+// ═══════════════════════════════════════════════════════
+window.sfToggleMap = sfToggleMap;
+window.sfLogin = sfLogin;
+window.appLogin = appLogin;
+window.appLogout = appLogout;
+window.openMapAfterLogin = openMapAfterLogin;
+window.sfLogout = sfLogout;
+window.showPage = showPage;
+window.showTab = showTab;
+window.openClosed = openClosed;
+window.closeDrawer = closeDrawer;
+window.mapSetFilter = mapSetFilter;
+window.mapFilter = mapFilter;
+window.toggleAdvFilters = toggleAdvFilters;
+window.setSubtypeFilter = setSubtypeFilter;
+window.applyAdvFilters = applyAdvFilters;
+window.clearAdvFilters = clearAdvFilters;
+window.focusComp = focusComp;
+window.openBovModal = openBovModal;
+window.closeBovModal = closeBovModal;
+window.generateBOV = generateBOV;
+window.toggleIntelFeed = toggleIntelFeed;
+window.intelSignalClick = intelSignalClick;
+window.toggleActivityPanel = toggleActivityPanel;
+window.loadMapComps = loadMapComps;
+
+</script>
+</body>
+</html>
