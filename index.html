@@ -1107,17 +1107,17 @@ function sfUpdatePill() {
 function sfTogglePanel() {
   const panel = document.getElementById('sf-comp-panel');
   if (!panel) return;
-  const isOpen = panel.classList.contains('sf-open');
+  const t = panel.style.transform;
+  const isOpen = (t === 'translateY(0)' || t === 'translateY(0px)');
   if (isOpen) {
-    panel.classList.remove('sf-open');
+    panel.style.transform = 'translateY(100%)';
   } else {
-    panel.classList.add('sf-open');
+    panel.style.transform = 'translateY(0)';
     if (!sfIsAuthed()) {
       sfShowLoginScreen();
     } else if (sfComps.length === 0) {
       sfLoadComps();
     }
-    // If comps already loaded, nothing to re-render
   }
 }
 
@@ -1279,7 +1279,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   if (authed) {
     // Returned from SF login — open panel and load comps automatically
     const panel = document.getElementById('sf-comp-panel');
-    if (panel) panel.classList.add('sf-open');
+    if (panel) panel.style.transform = 'translateY(0)';
     sfLoadComps();
   }
 });
