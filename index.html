@@ -738,7 +738,7 @@ textarea.form-input{resize:vertical;min-height:100px}
       <div style="width:28px;height:28px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#05014B">L|H</div>
       <div>
         <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4)">LH Capital Partners</div>
-        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:400">v14</span></div>
+        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:400">v15</span></div>
       </div>
       <div id="map-status-badge" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)"></div>
     </div>
@@ -850,7 +850,7 @@ textarea.form-input{resize:vertical;min-height:100px}
     <div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connect to Salesforce</div>
     <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:32px;max-width:300px;line-height:1.65">Authorize Salesforce to load live comp data.</div>
     <button onclick="sfLogin()" style="background:#FFC000;color:#05014B;border:none;padding:14px 32px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Connect to Salesforce</button>
-    <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:14px">Session expires when tab closes.</div>
+    <div id="sf-login-status" style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:14px">Session expires when tab closes.</div>
   </div>
 </div>
 
@@ -1009,10 +1009,35 @@ async function sfBuildPKCE(){
   return{verifier:v,challenge:ch};
 }
 async function sfLogin(){
+  const statusEl=document.getElementById('sf-login-status');
+  if(statusEl)statusEl.textContent='Opening Salesforce login…';
   const{verifier,challenge}=await sfBuildPKCE();
   sessionStorage.setItem(_SK.verifier,verifier);
   const p=new URLSearchParams({response_type:'code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
-  window.location.href=`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`;
+  const popup=window.open(`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`,'sf_oauth_popup','width=620,height=720,left=200,top=80');
+  if(!popup||popup.closed){if(statusEl)statusEl.textContent='⚠ Allow popups for this site then try again.';alert('Allow popups for lhcapitalintelligence.github.io then click Connect again.');return;}
+  if(statusEl)statusEl.textContent='Waiting for Salesforce authorization…';
+  function handleOAuthMsg(event){
+    if(event.origin!==window.location.origin)return;
+    if(!event.data||event.data.type!=='sf_oauth_code')return;
+    window.removeEventListener('message',handleOAuthMsg);
+    exchangeCodeForToken(event.data.code);
+  }
+  window.addEventListener('message',handleOAuthMsg);
+  const watchdog=setInterval(()=>{if(popup.closed){clearInterval(watchdog);window.removeEventListener('message',handleOAuthMsg);if(!sfIsAuthed()&&statusEl)statusEl.textContent='Cancelled. Click Connect to try again.';}},800);
+}
+async function exchangeCodeForToken(code){
+  const statusEl=document.getElementById('sf-login-status');
+  if(statusEl)statusEl.textContent='Exchanging authorization code…';
+  const verifier=sessionStorage.getItem(_SK.verifier);
+  if(!code||!verifier){if(statusEl)statusEl.textContent='Error: try again.';return;}
+  const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code,code_verifier:verifier});
+  try{
+    const r=await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    if(d.access_token){sfStoreTokens(d.access_token,d.instance_url);sfUpdateStatus();document.getElementById('map-login-screen').style.display='none';logActivity('SF Connected');if(statusEl)statusEl.textContent='Connected!';setTimeout(()=>loadMapComps(),300);}
+    else{const msg=d.error_description||d.error||'Unknown error';if(statusEl)statusEl.textContent='SF error: '+msg;alert('SF auth failed: '+msg);}
+  }catch(e){if(statusEl)statusEl.textContent='Network error.';alert('Token exchange failed. You may need to add https://lhcapitalintelligence.github.io to SF Setup → Security → CORS\n\n'+e.message);}
 }
 async function sfHandleCallback(){
   const p=new URLSearchParams(window.location.search);
@@ -1322,23 +1347,17 @@ function closeDrawer(){document.getElementById('drawer-overlay').classList.remov
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded',async()=>{
-  const authed=await sfHandleCallback();
-  sfUpdateStatus();
-  const u=appGetUser();
-  const b=document.getElementById('activity-count');if(b)b.textContent=activityLog.length;
-  if(authed){
-    if(u){
-      document.getElementById('sf-map-overlay').style.display='flex';
-      renderUserBadge();sfUpdateStatus();
-      if(!leafletMap)initLeaflet();
-      document.getElementById('map-login-screen').style.display='none';
-      setTimeout(()=>loadMapComps(),500);
-    } else {
-      document.getElementById('app-login').style.display='flex';
-      sessionStorage.setItem('lhc_pending_map','1');
-    }
+window.addEventListener('DOMContentLoaded',()=>{
+  // OAuth popup callback: if we have ?code= and an opener, post to opener and close
+  const urlCode=new URLSearchParams(window.location.search).get('code');
+  if(urlCode&&window.opener&&!window.opener.closed){
+    try{window.opener.postMessage({type:'sf_oauth_code',code:urlCode},window.location.origin);}catch(e){}
+    document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;padding:60px;background:#05014B;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connecting to Salesforce…</div><div style="font-size:13px;color:rgba(255,255,255,0.5)">This window will close automatically.</div></div>';
+    setTimeout(()=>window.close(),2000);
+    return;
   }
+  sfUpdateStatus();
+  const b=document.getElementById('activity-count');if(b)b.textContent=activityLog.length;
 });
 
 // ═══════════════════════════════════════════════════════
