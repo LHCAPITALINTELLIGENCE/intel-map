@@ -985,6 +985,7 @@ const SF_COMP_SOQL=`SELECT Id, Name,
   TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
   TTL_Core__Submarket__c, TTL_Core__Market__c,
   Confirmed__c, Source__c, RecordTypeId,
+  WALT__c, TTL_Core__Occpancy__c, TTL_Core__Lease_Commencement__c, TTL_Core__Lease_Expiration__c, TTL_Core__Rent_Escalations__c, TTL_Core__TI_PSF__c,
   TTL_Core__Property_Name__c,
   TTL_Core__Property_Name__r.TTL_Core__Latitude__c,
   TTL_Core__Property_Name__r.TTL_Core__Longitude__c
@@ -1274,7 +1275,76 @@ function focusComp(i){
   document.querySelectorAll('.map-comp-item').forEach(el=>el.classList.remove('map-comp-selected'));
   document.getElementById('mci-'+i)?.classList.add('map-comp-selected');
   if(mapMarkers[i]){mapMarkers[i].openPopup();leafletMap?.setView(mapMarkers[i].getLatLng(),14);}
-  const r=mapFilteredComps[i];if(r)logActivity('Comp Viewed',(r.TTL_Core__Address__c||'')+(r.TTL_Core__City__c?', '+r.TTL_Core__City__c:''));
+  const r=mapFilteredComps[i];
+  if(r){
+    logActivity('Comp Viewed',(r.TTL_Core__Address__c||'')+(r.TTL_Core__City__c?', '+r.TTL_Core__City__c:''));
+    openCompDrawer(r);
+  }
+}
+
+function openCompDrawer(r){
+  const type=sfCompType(r);
+  const isLease=type==='lease';
+  const addr=r.TTL_Core__Address__c||r.Name||'—';
+  const city=r.TTL_Core__City__c||'';
+  const state=r.TTL_Core__State__c||'';
+  const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
+  const date=r.TTL_Core__Close_Deal_Date__c||'';
+  const subtype=r.TTL_Core__Property_Subtype__c||r.TTL_Core__Property_Type__c||'';
+  const submarket=r.TTL_Core__Submarket__c||r.TTL_Core__Market__c||'';
+  const u=appGetUser();const isPartner=!u||u.tier==='partner';
+
+  const rows=[
+    ['Type', isLease?'Lease Comp':'Sale Comp'],
+    ['Address', addr],
+    ['City / State', [city,state].filter(Boolean).join(', ')||'—'],
+    ['Asset Subtype', subtype||'—'],
+    ['Submarket', submarket||'—'],
+    isLease?['Rent/SF/yr', r.TTL_Core__Rent_SF_Year__c?'$'+Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)+' NNN':'—']:['Sale Price', r.TTL_Core__Price_total__c?'$'+Number(r.TTL_Core__Price_total__c).toLocaleString():'—'],
+    isLease?['Monthly Rent', r.Rent_Mo__c?'$'+Number(r.Rent_Mo__c).toLocaleString():'—']:['Price/SF', r.TTL_Core__Price_per_SF_Unit_Acre__c?'$'+Number(r.TTL_Core__Price_per_SF_Unit_Acre__c).toFixed(2):'—'],
+    ['Building SF', sf?Number(sf).toLocaleString()+' SF':'—'],
+    isLease?['Lease Structure', r.TTL_Core__Lease_Structure__c||'—']:['Cap Rate', r.TTL_Core__Cap_Rate_YR_1__c?Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(2)+'%':'—'],
+    isLease?['Commencement', r.TTL_Core__Lease_Commencement__c||'—']:['Close Date', date?date.slice(0,10):'—'],
+    isLease?['Expiration', r.TTL_Core__Lease_Expiration__c||'—']:['WALT', r.WALT__c?Number(r.WALT__c).toFixed(1)+' yrs':'—'],
+    isLease?['Term (mo)', r.TTL_Core__Lease_Term_Months__c||'—']:['Occupancy', r.TTL_Core__Occpancy__c?Number(r.TTL_Core__Occpancy__c)+'%':'—'],
+    ['Confirmed', r.Confirmed__c?'✓ OM-Sourced':'Unconfirmed'],
+    isPartner?['Source', r.Source__c||'—']:null,
+    ['Notes', r.TTL_Core__Notes__c||'—'],
+  ].filter(Boolean);
+
+  const color=isLease?'#0A6EE8':'#E8400A';
+  const label=isLease?'LEASE COMP':'SALE COMP';
+
+  const html=`
+    <div style="background:${color};padding:14px 20px;display:flex;justify-content:space-between;align-items:center">
+      <div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;color:rgba(255,255,255,0.7)">${label}</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-top:3px;line-height:1.2">${addr}</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px">${[city,state].filter(Boolean).join(', ')}</div>
+      </div>
+      ${r.Confirmed__c?'<div style="background:rgba(255,255,255,0.2);color:#fff;font-size:9px;font-weight:700;letter-spacing:0.1em;padding:4px 8px;align-self:flex-start">✓ CONFIRMED</div>':''}
+    </div>
+    <div style="padding:20px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        ${rows.map(([k,v])=>`
+          <tr style="border-bottom:1px solid #E2E8F0">
+            <td style="padding:9px 0;color:#64748B;font-weight:600;width:42%;font-size:11px;text-transform:uppercase;letter-spacing:0.06em">${k}</td>
+            <td style="padding:9px 0;color:#05014B;font-weight:${k==='Rent/SF/yr'||k==='Sale Price'||k==='Cap Rate'?'700':'500'};font-size:${k==='Rent/SF/yr'||k==='Sale Price'?'14':'12'}px">${v}</td>
+          </tr>`).join('')}
+      </table>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button onclick="sfOpenInSalesforce('${r.Id}')" style="flex:1;background:#05014B;color:#FFC000;border:none;padding:10px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Open in Salesforce ↗</button>
+      </div>
+    </div>`;
+
+  document.getElementById('drawer-body').innerHTML=html;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+
+function sfOpenInSalesforce(id){
+  const org=sfGetOrg()||'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
+  window.open(org+'/'+id,'_blank');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1413,106 +1483,4 @@ const INTEL_SIGNALS = [
     date:'Jan 8, 2026',
     headline:'Brennan Investment Group Acquires Tampa Shallow-Bay Portfolio',
     tip:"Active buyer in Tampa shallow-bay. Add to acquisition prospect list - may have appetite for more.",
-    url:'https://tbbwmag.com/2026/01/08/multi-state-industrial-portfolio-includes-tampa-assets/',
-    source:'Tampa Bay Business Wire',
-    markets:['Tampa']
-  },
-  {
-    id:'s4',
-    tag:'Tenant',
-    color:'#6366f1',
-    score:'red',
-    scoreLabel:'🔴 Call Today',
-    date:'Apr 2026',
-    headline:'Alterra IOS Acquires 5 Central Florida IOS Properties',
-    tip:"Alterra is aggressively buying in your backyard. Any owner in Central FL IOS market should hear from you before Alterra does.",
-    url:'https://alterraios.com',
-    source:'Alterra IOS',
-    markets:['Orlando','Tampa']
-  },
-  {
-    id:'s5',
-    tag:'Market',
-    color:'#3b82f6',
-    score:'yellow',
-    scoreLabel:'🟡 Monitor',
-    date:'May 2026',
-    headline:'FL Industrial Vacancy Tightens to 4.1% - Rent Growth Accelerating',
-    tip:"Use this on every BOV call. Market is tightening - owners who wait 12 months may leave 15-20% on the table.",
-    url:'https://www.costar.com/article/florida-industrial-market',
-    source:'CoStar Market Report',
-    markets:['All Florida']
-  },
-  {
-    id:'s6',
-    tag:'IOS',
-    color:'#FFC000',
-    score:'red',
-    scoreLabel:'🔴 Call Today',
-    date:'May 2026',
-    headline:'IOS Cap Rates Compress to 5.2% Nationally - FL Premium at 5.8%',
-    tip:"Owners who could not get their number 18 months ago can now. Revisit stale leads.",
-    url:'https://www.cbre.com/insights/reports/us-industrial-outdoor-storage-outlook',
-    source:'CBRE IOS Outlook',
-    markets:['All Florida']
-  }
-];
-
-let intelFeedOpen = false;
-
-function toggleIntelFeed() {
-  const panel = document.getElementById('intel-feed-panel');
-  const btn = document.getElementById('intel-feed-toggle');
-  intelFeedOpen = !intelFeedOpen;
-  panel.style.width = intelFeedOpen ? '320px' : '0';
-  if(btn) btn.style.background = intelFeedOpen ? 'rgba(255,192,0,0.3)' : 'rgba(255,192,0,0.15)';
-  if(intelFeedOpen) renderIntelFeed();
-}
-
-function renderIntelFeed() {
-  const el = document.getElementById('intel-feed-list');
-  if(!el) return;
-  el.innerHTML = INTEL_SIGNALS.map(s => `
-    <div onclick="intelSignalClick('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:12px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='rgba(255,192,0,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
-        <span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:${s.color}22;color:${s.color};padding:2px 7px;border-radius:2px">${s.tag}</span>
-        <span style="font-size:9px;color:rgba(255,255,255,0.3)">${s.date}</span>
-      </div>
-      <div style="font-size:11px;font-weight:600;color:#fff;line-height:1.45;margin-bottom:8px">${s.headline}</div>
-      <div style="font-size:10px;color:#FFC000;font-style:italic;line-height:1.5;margin-bottom:8px;padding-left:8px;border-left:2px solid rgba(255,192,0,0.3)">▶ ${s.tip}</div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <span style="font-size:10px;font-weight:700">${s.scoreLabel}</span>
-        <a href="${s.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:9px;color:rgba(255,255,255,0.3);text-decoration:underline">${s.source} ↗</a>
-      </div>
-      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
-        ${s.markets.map(m=>`<span style="font-size:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);padding:2px 6px">${m}</span>`).join('')}
-      </div>
-    </div>
-  `).join('');
-}
-
-function intelSignalClick(id) {
-  const s = INTEL_SIGNALS.find(x=>x.id===id);
-  if(!s) return;
-  logActivity('Signal Viewed', s.headline);
-  // Filter map to matching markets
-  if(s.markets.includes('All Florida')) {
-    mapFilter(); // show all
-  } else {
-    const q = s.markets[0];
-    const searchEl = document.getElementById('map-search');
-    if(searchEl){ searchEl.value = q; mapFilter(); }
-  }
-  // Flash pins
-  setTimeout(()=>{
-    mapMarkers.forEach(m=>{
-      const el = m.getElement ? m.getElement() : null;
-      if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); 
-}
-    });
-  }, 200);
-}
-
-</script>
-</body>
-</html>
+    url:'https://tbbwmag.com/2026/01/08/multi-state-industrial-portfolio-includes-ta
