@@ -962,7 +962,6 @@ const SF_REDIRECT    = window.location.origin + window.location.pathname;
 const SF_COMP_SOQL = `
 SELECT Id, Name,
   TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
-  TTL_Core__Latitude__c, TTL_Core__Longitude__c,
   TTL_Core__Rent_SF_Year__c, TTL_Core__Price_total__c,
   TTL_Core__Rentable_SF__c, TTL_Core__Gross_SF__c,
   TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
@@ -971,7 +970,6 @@ SELECT Id, Name,
   RecordType.Name
 FROM TTL_Core__Comp__c
 WHERE IsDeleted = false
-AND TTL_Core__Latitude__c != null
 LIMIT 500`.trim();
 
 // ─── TOKEN STORAGE (sessionStorage only — clears when tab closes) ─
