@@ -1016,13 +1016,13 @@ async function sfLogin(){
   localStorage.removeItem('sf_oauth_code');
   localStorage.removeItem('sf_oauth_ts');
   const p=new URLSearchParams({response_type:'code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
-  const popup=window.open(`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`,'sf_oauth_popup','width=620,height=720,left=200,top=80');
-  if(!popup||popup.closed){
-    if(statusEl)statusEl.textContent='Allow popups for this site then try again.';
+  const authTab=window.open(`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`,'_blank');
+  if(!authTab){
+    if(statusEl)statusEl.textContent='Popup blocked. Allow popups then try again.';
     alert('Allow popups for lhcapitalintelligence.github.io then click Connect again.');
     return;
   }
-  if(statusEl)statusEl.textContent='Waiting for Salesforce authorization...';
+  if(statusEl)statusEl.textContent='Complete Salesforce login in the new tab...';
   const poll=setInterval(()=>{
     const code=localStorage.getItem('sf_oauth_code');
     const ts=parseInt(localStorage.getItem('sf_oauth_ts')||'0');
@@ -1030,14 +1030,11 @@ async function sfLogin(){
       clearInterval(poll);
       localStorage.removeItem('sf_oauth_code');
       localStorage.removeItem('sf_oauth_ts');
-      try{popup.close();}catch(e){}
+      try{authTab.close();}catch(e){}
       exchangeCodeForToken(code);
       return;
     }
-    if(popup.closed){
-      clearInterval(poll);
-      if(!sfIsAuthed()&&statusEl)statusEl.textContent='Cancelled. Click Connect to try again.';
-    }
+    try{if(authTab.closed&&!sfIsAuthed()){clearInterval(poll);if(statusEl)statusEl.textContent='Tab closed. Click Connect to try again.';}}catch(e){clearInterval(poll);}
   },500);
 }
 async function exchangeCodeForToken(code){
@@ -1045,7 +1042,7 @@ async function exchangeCodeForToken(code){
   if(statusEl)statusEl.textContent='Exchanging authorization code...';
   const verifier=sessionStorage.getItem(_SK.verifier);
   if(!code||!verifier){if(statusEl)statusEl.textContent='Error: missing code. Try again.';return;}
-  const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code,code_verifier:verifier});
+  const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,client_secret:'DAB938CA72FCB993B99B64EBDB7584E55C06AE919F4851604BE40291E48CD967',redirect_uri:SF_REDIRECT,code,code_verifier:verifier});
   try{
     const r=await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
     const d=await r.json();
@@ -1510,11 +1507,4 @@ function intelSignalClick(id) {
   setTimeout(()=>{
     mapMarkers.forEach(m=>{
       const el = m.getElement ? m.getElement() : null;
-      if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); }
-    });
-  }, 200);
-}
-
-</script>
-</body>
-</html>
+      if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); 
