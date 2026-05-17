@@ -154,6 +154,26 @@ textarea.form-input{resize:vertical;min-height:100px}
 .map-comp-item{padding:11px 14px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background 0.1s}
 .map-comp-item:hover{background:#F4F7FB}
 .map-comp-item.map-comp-selected{background:#EEF2FF;border-left:3px solid #05014B}
+/* LAYER CONTROLS */
+.layer-row{display:flex;align-items:center;gap:7px;padding:5px 0;cursor:pointer}
+.layer-toggle{width:32px;height:16px;border-radius:8px;position:relative;transition:background 0.2s;flex-shrink:0;border:none;cursor:pointer;padding:0}
+.layer-toggle.on{background:#05014B}
+.layer-toggle.off{background:#CBD5E1}
+.layer-toggle::after{content:'';position:absolute;width:12px;height:12px;border-radius:50%;background:#fff;top:2px;transition:left 0.2s}
+.layer-toggle.on::after{left:18px}
+.layer-toggle.off::after{left:2px}
+@keyframes pulse-flag{0%{transform:scale(1);opacity:1}50%{transform:scale(1.6);opacity:0.4}100%{transform:scale(1);opacity:1}}
+.opp-flag-pulse{animation:pulse-flag 1.8s ease-in-out infinite}
+.layer-tier-label{font-size:8px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#7C3AED;margin:8px 0 4px;padding-top:6px;border-top:1px solid #E2E8F0}
+.layer-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.layer-label{font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;color:#2D3A4A}
+.layer-count{font-size:9px;color:#94A3B8;margin-left:auto}
+.exp-badge{font-size:9px;font-weight:700;padding:1px 5px;border-radius:2px}
+.exp-urgent{background:#fef3c7;color:#92400e}
+.exp-near{background:#fde8d8;color:#c2410c}
+/* PROPERTY PIN */
+.prop-pin{width:12px;height:12px;background:#7C3AED;border:2px solid #fff;border-radius:2px;transform:rotate(45deg);box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.deal-pin{width:14px;height:14px;background:#FFC000;border:2px solid #05014B;border-radius:50%;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
 /* ADVANCED FILTERS */
 #adv-filters-panel{display:none;border-bottom:1px solid #E2E8F0;background:#FAFBFE;padding:12px 14px}
 .adv-row{margin-bottom:10px}
@@ -757,6 +777,71 @@ textarea.form-input{resize:vertical;min-height:100px}
     <!-- Left Sidebar -->
     <div id="map-sidebar" style="width:340px;flex-shrink:0;background:#fff;border-right:1px solid #E2E8F0;display:flex;flex-direction:column;overflow:hidden">
 
+      <!-- Layer Controls -->
+      <div id="layer-controls" style="padding:10px 14px;border-bottom:1px solid #E2E8F0;background:#FAFBFE;flex-shrink:0">
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B;margin-bottom:7px">Map Layers</div>
+        <div class="layer-row">
+          <button class="layer-toggle on" id="lt-comps" onclick="toggleLayer('comps')"></button>
+          <div class="layer-dot" style="background:#0A6EE8"></div>
+          <div class="layer-dot" style="background:#E8400A"></div>
+          <span class="layer-label">Comps</span>
+          <span class="layer-count" id="lc-comps">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-properties" onclick="toggleLayer('properties')"></button>
+          <div class="layer-dot" style="background:#7C3AED;border-radius:2px;transform:rotate(45deg)"></div>
+          <span class="layer-label">Intel Properties</span>
+          <span class="layer-count" id="lc-properties">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-spaces" onclick="toggleLayer('spaces')"></button>
+          <div class="layer-dot" style="background:#F97316;border:1.5px solid #EA580C"></div>
+          <span class="layer-label">IOS Spaces</span>
+          <span class="layer-count" id="lc-spaces">—</span>
+        </div>
+
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-expiring" onclick="toggleLayer('expiring')"></button>
+          <div class="layer-dot" style="background:#EF4444"></div>
+          <span class="layer-label">Expiring Comps</span>
+          <span class="layer-count" id="lc-expiring">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-deals" onclick="toggleLayer('deals')"></button>
+          <div class="layer-dot" style="background:#FFC000;border:1.5px solid #05014B;border-radius:50%"></div>
+          <span class="layer-label">Active Deals</span>
+          <span class="layer-count" id="lc-deals">—</span>
+        </div>
+
+        <div class="layer-tier-label">🔴 Tier 3 — Intelligence</div>
+
+        <div class="layer-row">
+          <button class="layer-toggle on" id="lt-flags" onclick="toggleLayer('flags')"></button>
+          <div class="layer-dot opp-flag-pulse" style="background:#EF4444;border-radius:50%;box-shadow:0 0 0 2px rgba(239,68,68,0.3)"></div>
+          <span class="layer-label">Opportunity Flags</span>
+          <span class="layer-count" id="lc-flags">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-zoning" onclick="toggleLayer('zoning')"></button>
+          <div class="layer-dot" style="background:linear-gradient(135deg,#16a34a 33%,#f59e0b 66%,#ef4444 100%);border-radius:2px"></div>
+          <span class="layer-label">IOS Zoning</span>
+          <span class="layer-count" id="lc-zoning">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-scores" onclick="toggleLayer('scores')"></button>
+          <div class="layer-dot" style="background:#7C3AED;border-radius:50%;font-size:7px;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800">S</div>
+          <span class="layer-label">Property Scores</span>
+          <span class="layer-count" id="lc-scores">—</span>
+        </div>
+        <div class="layer-row">
+          <button class="layer-toggle off" id="lt-tenants" onclick="toggleLayer('tenants')"></button>
+          <div class="layer-dot" style="background:#0891B2;border-radius:2px"></div>
+          <span class="layer-label">Tenant Locations</span>
+          <span class="layer-count" id="lc-tenants">—</span>
+        </div>
+
+      </div>
+
       <!-- Search + Basic Filters -->
       <div style="padding:12px 14px;border-bottom:1px solid #E2E8F0;flex-shrink:0">
         <input id="map-search" type="text" placeholder="Search address, city, submarket…" oninput="mapFilter()" style="width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;color:#2D3A4A"/>
@@ -991,6 +1076,61 @@ const SF_COMP_SOQL=`SELECT Id, Name,
   TTL_Core__Property_Name__r.TTL_Core__Longitude__c
 FROM TTL_Core__Comp__c WHERE IsDeleted = false LIMIT 2000`.trim();
 
+const SF_PROP_SOQL=`SELECT Id, Name,
+  TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
+  TTL_Core__Latitude__c, TTL_Core__Longitude__c,
+  TTL_Core__Property_Type__c, TTL_Core__Gross_SF__c,
+  TTL_Core__Submarket__c, TTL_Core__Market__c,
+  TTL_Core__County__c, TTL_Core__Land_Size_Acres__c,
+  IOS_Zoning_Score__c, IOS_Allowed__c, IOS_Allowance_Type__c, IOS_Zoning_Confidence__c,
+  Intelligence_Score__c, TTL_Core__Status__c,
+  Ownership_Entity__c, TTL_Core__Property_Owner__r.Name
+FROM TTL_Core__Property__c
+WHERE TTL_Core__Latitude__c != null
+AND IsDeleted = false
+AND TTL_Core__State__c = 'FL'
+AND TTL_Core__Property_Type__c IN ('Industrial','IOS','Flex','Land')
+ORDER BY Intelligence_Score__c DESC NULLS LAST
+LIMIT 2000`.trim();
+
+const SF_DEAL_SOQL=`SELECT Id, Name,
+  TTL_Core__Deal_Stage__c, TTL_Core__Deal_Type__c,
+  TTL_Core__Close_Date__c, TTL_Core__Commission_Amount__c,
+  TTL_Core__Property__r.TTL_Core__Address__c,
+  TTL_Core__Property__r.TTL_Core__City__c,
+  TTL_Core__Property__r.TTL_Core__State__c,
+  TTL_Core__Property__r.TTL_Core__Latitude__c,
+  TTL_Core__Property__r.TTL_Core__Longitude__c,
+  TTL_Core__Property__r.TTL_Core__Property_Type__c,
+  TTL_Core__Property__r.TTL_Core__Gross_SF__c
+FROM TTL_Core__Deal__c WHERE TTL_Core__Property__c != null AND IsDeleted = false LIMIT 500`.trim();
+
+// TTL_Core__Unit__c — IOS/Industrial Spaces with expiring leases
+const SF_SPACES_SOQL=`SELECT Id, Name,
+  TTL_Core__Space_Type__c, TTL_Core__Rentable_SF__c, TTL_Core__Status__c,
+  TTL_Core__Lease_Expiration_Date__c, TTL_Core__Asking_Rate__c,
+  TTL_Core__Property__r.Name,
+  TTL_Core__Property__r.TTL_Core__Address__c,
+  TTL_Core__Property__r.TTL_Core__City__c,
+  TTL_Core__Property__r.TTL_Core__State__c,
+  TTL_Core__Property__r.TTL_Core__Latitude__c,
+  TTL_Core__Property__r.TTL_Core__Longitude__c,
+  TTL_Core__Property__r.TTL_Core__Property_Type__c,
+  TTL_Core__Property__r.TTL_Core__Market__c,
+  TTL_Core__Property__r.TTL_Core__Gross_SF__c,
+  TTL_Core__Property__r.IOS_Zoning_Score__c,
+  TTL_Core__Property__r.Intelligence_Score__c
+FROM TTL_Core__Unit__c
+WHERE TTL_Core__Property__r.TTL_Core__Latitude__c != null
+AND IsDeleted = false
+AND TTL_Core__Space_Type__c IN ('IOS', 'Industrial', 'Building with IOS')
+ORDER BY TTL_Core__Lease_Expiration_Date__c ASC NULLS LAST
+LIMIT 1000`.trim();
+
+
+// Acquisition Preferences (buyer criteria)
+
+
 const _SK={token:'sf_at',org:'sf_iu',verifier:'sf_cv'};
 const sfGetToken=()=>sessionStorage.getItem(_SK.token);
 const sfGetOrg  =()=>sessionStorage.getItem(_SK.org);
@@ -1088,6 +1228,9 @@ function sfUpdateStatus(){
 // MAP STATE
 // ═══════════════════════════════════════════════════════
 let leafletMap=null,mapComps=[],mapFilteredComps=[],mapActiveFilter='all',mapMarkers=[],geocodeCache={};
+let mapProperties=[],mapDeals=[],mapSpaces=[];
+let propMarkers=[],dealMarkers=[],spaceMarkers=[],zoningMarkers=[],scoreMarkers=[],flagMarkers=[],tenantMarkers=[];
+let mapLayers={comps:true,properties:false,spaces:false,expiring:false,deals:false,flags:true,zoning:false,scores:false,tenants:false};
 let advFilters={subtype:'all',confirmedOnly:false,yearFrom:'',yearTo:'',sfMin:'',sfMax:'',submarket:'all'};
 
 function sfCompType(r){return r.RecordTypeId===RT_LEASE?'lease':r.RecordTypeId===RT_SALE?'sale':'sale';}
@@ -1104,7 +1247,7 @@ function openMapAfterLogin(){
   renderUserBadge();sfUpdateStatus();
   if(!leafletMap)initLeaflet();
   if(!sfIsAuthed()){document.getElementById('map-login-screen').style.display='flex';}
-  else{document.getElementById('map-login-screen').style.display='none';if(mapComps.length===0)loadMapComps();}
+  else{document.getElementById('map-login-screen').style.display='none';if(mapComps.length===0)loadMapComps();renderOpportunityFlags();}
   logActivity('Map Opened');
 }
 function initLeaflet(){
@@ -1119,10 +1262,437 @@ async function loadMapComps(){
     mapComps=await sfQuery(SF_COMP_SOQL);
     document.getElementById('map-status-badge').textContent=`${mapComps.length} comps`;
     populateSubmarkets();mapFilter();
+    updateLayerCounts();
     logActivity('Comps Loaded',`${mapComps.length} comps from Salesforce`);
   }catch(err){
     document.getElementById('map-comp-list').innerHTML=`<div style="padding:24px;text-align:center;font-size:12px;color:#ef4444">${err.message}<br><button onclick="loadMapComps()" style="margin-top:12px;background:#05014B;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:11px">Retry</button></div>`;
   }
+}
+
+async function loadProperties(){
+  const lc=document.getElementById('lc-properties');if(lc)lc.textContent='Loading…';
+  try{
+    mapProperties=await sfQuery(SF_PROP_SOQL);
+    if(lc)lc.textContent=mapProperties.length;
+    renderPropertyPins();
+    logActivity('Properties Loaded',`${mapProperties.length} properties`);
+  }catch(err){
+    if(lc)lc.textContent='Error';
+    console.warn('Properties load failed:',err.message);
+    // Silently fail - properties layer just won't show
+  }
+}
+
+async function loadDeals(){
+  const lc=document.getElementById('lc-deals');if(lc)lc.textContent='Loading…';
+  try{
+    mapDeals=await sfQuery(SF_DEAL_SOQL);
+    if(lc)lc.textContent=mapDeals.length;
+    renderDealPins();
+    logActivity('Deals Loaded',`${mapDeals.length} active deals`);
+  }catch(err){
+    if(lc)lc.textContent='—';
+    console.warn('Deals load failed:',err.message);
+  }
+}
+
+async function loadSpaces(){
+  const lc=document.getElementById('lc-spaces');if(lc)lc.textContent='Loading…';
+  try{
+    mapSpaces=await sfQuery(SF_SPACES_SOQL);
+    if(lc)lc.textContent=mapSpaces.length;
+    renderSpacePins();
+    logActivity('Spaces Loaded',`${mapSpaces.length} IOS spaces`);
+  }catch(err){
+    if(lc)lc.textContent='—';
+    console.warn('Spaces load failed:',err.message);
+  }
+}
+
+function toggleLayer(name){
+  mapLayers[name]=!mapLayers[name];
+  const btn=document.getElementById('lt-'+name);
+  if(btn)btn.className='layer-toggle '+(mapLayers[name]?'on':'off');
+  if(name==='comps'){plotPins();}
+  else if(name==='properties'){
+    if(mapLayers.properties&&mapProperties.length===0)loadProperties();
+    else renderPropertyPins();
+  }else if(name==='spaces'){
+    if(mapLayers.spaces&&mapSpaces.length===0)loadSpaces();
+    else renderSpacePins();
+  }else if(name==='expiring'){mapFilter();}
+  else if(name==='deals'){
+    if(mapLayers.deals&&mapDeals.length===0)loadDeals();
+    else renderDealPins();
+  }else if(name==='flags'){
+    renderOpportunityFlags();
+  }else if(name==='zoning'){
+    if(mapLayers.zoning&&mapProperties.length===0)loadProperties().then(()=>renderZoningPins());
+    else renderZoningPins();
+  }else if(name==='scores'){
+    if(mapLayers.scores&&mapProperties.length===0)loadProperties().then(()=>renderScorePins());
+    else renderScorePins();
+  }else if(name==='tenants'){
+    renderTenantPins();
+  }
+}
+
+function updateLayerCounts(){
+  const lcc=document.getElementById('lc-comps');if(lcc)lcc.textContent=mapComps.length;
+  const expCount=mapComps.filter(r=>{
+    const exp=r.TTL_Core__Lease_Expiration__c;if(!exp)return false;
+    const ms=new Date(exp)-Date.now();return ms>0&&ms<18*30*24*3600*1000;
+  }).length;
+  const lce=document.getElementById('lc-expiring');if(lce)lce.textContent=expCount||'—';
+  const lcs=document.getElementById('lc-spaces');if(lcs&&mapSpaces.length>0)lcs.textContent=mapSpaces.length;
+  const lcf=document.getElementById('lc-flags');if(lcf)lcf.textContent=OPPORTUNITY_FLAGS.length;
+  const lcz=document.getElementById('lc-zoning');if(lcz&&mapProperties.length>0)lcz.textContent=mapProperties.filter(p=>p.IOS_Allowed__c).length||'—';
+  const lcsc=document.getElementById('lc-scores');if(lcsc&&mapProperties.length>0)lcsc.textContent=mapProperties.filter(p=>p.Intelligence_Score__c!=null).length||'—';
+  const lct=document.getElementById('lc-tenants');if(lct)lct.textContent=FL_TENANT_LOCATIONS.length;
+}
+
+function getExpiryStatus(r){
+  const exp=r.TTL_Core__Lease_Expiration__c;if(!exp)return null;
+  const ms=new Date(exp)-Date.now();const days=ms/(24*3600*1000);
+  if(days<0)return null;
+  if(days<180)return'urgent';
+  if(days<365)return'near';
+  if(days<548)return'watch';
+  return null;
+}
+
+function renderPropertyPins(){
+  propMarkers.forEach(m=>m.remove());propMarkers=[];
+  if(!leafletMap||!mapLayers.properties)return;
+  mapProperties.forEach(p=>{
+    const lat=p.TTL_Core__Latitude__c,lng=p.TTL_Core__Longitude__c;
+    if(!lat||!lng)return;
+    const addr=p.TTL_Core__Address__c||p.Name||'—';
+    const city=p.TTL_Core__City__c||'';const state=p.TTL_Core__State__c||'';
+    const sf=p.TTL_Core__Gross_SF__c;
+    const icon=L.divIcon({className:'',html:'<div class="prop-pin"></div>',iconSize:[12,12],iconAnchor:[6,6]});
+    const popup=`<div style="font-size:12px;min-width:180px;line-height:1.5">
+      <div style="font-weight:700;color:#7C3AED;margin-bottom:2px">${addr}</div>
+      <div style="color:#64748B;font-size:11px">${[city,state].filter(Boolean).join(', ')}</div>
+      ${p.TTL_Core__Property_Type__c?`<div style="font-size:10px;color:#94A3B8;margin-top:3px">${p.TTL_Core__Property_Type__c}</div>`:''}
+      ${sf?`<div style="font-size:11px;color:#64748B">${Number(sf).toLocaleString()} SF</div>`:''}
+      <div style="margin-top:8px"><button onclick="openPropertyDrawer(window._propById['${p.Id}'])" style="background:#7C3AED;color:#fff;border:none;padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%">View Detail →</button></div>
+    </div>`;
+    const m=L.marker([parseFloat(lat),parseFloat(lng)],{icon}).addTo(leafletMap).bindPopup(popup);
+    m.on('click',()=>{openPropertyDrawer(p);});
+    propMarkers.push(m);
+  });
+  // Store by Id for popup button access
+  window._propById={};mapProperties.forEach(p=>{window._propById[p.Id]=p;});
+}
+
+function renderDealPins(){
+  dealMarkers.forEach(m=>m.remove());dealMarkers=[];
+  if(!leafletMap||!mapLayers.deals)return;
+  mapDeals.forEach(d=>{
+    const prop=d.TTL_Core__Property__r;if(!prop)return;
+    const lat=prop.TTL_Core__Latitude__c,lng=prop.TTL_Core__Longitude__c;
+    if(!lat||!lng)return;
+    const addr=prop.TTL_Core__Address__c||d.Name||'—';
+    const city=prop.TTL_Core__City__c||'';const state=prop.TTL_Core__State__c||'';
+    const icon=L.divIcon({className:'',html:'<div class="deal-pin"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+    const popup=`<div style="font-size:12px;min-width:170px;line-height:1.5">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;color:#FFC000;background:#05014B;padding:2px 6px;display:inline-block;margin-bottom:4px">ACTIVE DEAL</div>
+      <div style="font-weight:700;color:#05014B">${addr}</div>
+      <div style="color:#64748B;font-size:11px">${[city,state].filter(Boolean).join(', ')}</div>
+      <div style="margin-top:6px"><button onclick="sfOpenInSalesforce('${d.Id}')" style="background:#FFC000;color:#05014B;border:none;padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%">Open in SF ↗</button></div>
+    </div>`;
+    const m=L.marker([parseFloat(lat),parseFloat(lng)],{icon}).addTo(leafletMap).bindPopup(popup);
+    dealMarkers.push(m);
+  });
+}
+
+function renderSpacePins(){
+  spaceMarkers.forEach(m=>m.remove());spaceMarkers=[];
+  if(!leafletMap||!mapLayers.spaces)return;
+  const today=Date.now();
+  mapSpaces.forEach(s=>{
+    const prop=s.TTL_Core__Property__r;if(!prop)return;
+    const lat=prop.TTL_Core__Latitude__c,lng=prop.TTL_Core__Longitude__c;
+    if(!lat||!lng)return;
+    const addr=prop.TTL_Core__Address__c||s.Name||'—';
+    const city=prop.TTL_Core__City__c||'';const state=prop.TTL_Core__State__c||'FL';
+    const sf=s.TTL_Core__Rentable_SF__c;
+    const spaceType=s.TTL_Core__Space_Type__c||'IOS';
+    const exp=s.TTL_Core__Lease_Expiration_Date__c;
+    const expMs=exp?new Date(exp)-today:null;
+    const expDays=expMs?expMs/(24*3600*1000):null;
+    // Color by expiry urgency
+    let pinColor='#F97316'; // default orange
+    let expLabel='';
+    if(exp){
+      if(expDays<0){pinColor='#94A3B8';expLabel='Expired';}
+      else if(expDays<180){pinColor='#EF4444';expLabel='< 6 mo';}
+      else if(expDays<365){pinColor='#F59E0B';expLabel='< 1 yr';}
+      else if(expDays<730){pinColor='#22C55E';expLabel='1–2 yr';}
+      else{pinColor='#F97316';expLabel=new Date(exp).getFullYear()+'';}
+    }
+    const icon=L.divIcon({className:'',html:`<div style="width:10px;height:10px;border-radius:2px;background:${pinColor};border:1.5px solid rgba(0,0,0,0.3)"></div>`,iconSize:[10,10],iconAnchor:[5,5]});
+    const popup=`<div style="font-size:12px;min-width:190px;line-height:1.5">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;color:#fff;background:#F97316;padding:2px 8px;display:inline-block;margin-bottom:4px">${spaceType.toUpperCase()}</div>
+      <div style="font-weight:700;color:#05014B">${addr}</div>
+      <div style="color:#64748B;font-size:11px">${[city,state].filter(Boolean).join(', ')}</div>
+      ${sf?`<div style="font-size:11px;color:#64748B;margin-top:2px">${Number(sf).toLocaleString()} SF</div>`:''}
+      ${exp?`<div style="font-size:11px;color:${pinColor};font-weight:700;margin-top:4px">Exp: ${exp} ${expLabel?'('+expLabel+')':''}</div>`:'<div style="font-size:11px;color:#94A3B8;margin-top:4px">No expiration date</div>'}
+      <div style="margin-top:6px"><button onclick="sfOpenInSalesforce('${s.Id}')" style="background:#F97316;color:#fff;border:none;padding:5px 10px;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%">Open in SF ↗</button></div>
+    </div>`;
+    const m=L.marker([parseFloat(lat),parseFloat(lng)],{icon}).addTo(leafletMap).bindPopup(popup);
+    spaceMarkers.push(m);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// TIER 3 — OPPORTUNITY FLAGS (hardcoded, on by default)
+// ═══════════════════════════════════════════════════════
+const OPPORTUNITY_FLAGS=[
+  {id:'f1',lat:28.52,lng:-81.42,type:'IOS Investor Active',urgency:'urgent',
+   title:'Alterra IOS — Central FL Acquisition Push',
+   signal:'Actively acquiring 2–8 acre IOS sites in Central FL. 5+ deals closed in last 12 months. Looking at Hillsborough, Orange, Osceola, Polk, Pinellas.',
+   action:'Call landlords with IOS-compatible sites in these counties. Alterra paying premium for by-right zoning.',
+   date:'May 2026'},
+  {id:'f2',lat:30.18,lng:-81.53,type:'Off-Market Target',urgency:'urgent',
+   title:'South Jacksonville — SLB Value Unlock',
+   signal:'55K SF at 8286 Western Way Circle. True market rent $13–14/SF NNN vs $11/SF in-place. Submarket high-growth, PM underperforming.',
+   action:'Pitch sale-leaseback to owner. Defend rent to $13–14 range to unlock full equity. Target: Rycore Capital as buyer.',
+   date:'May 2026'},
+  {id:'f3',lat:27.95,lng:-82.46,type:'Tenant Expansion Signal',urgency:'monitor',
+   title:'Tampa Bay — Small Bay Supply Gap',
+   signal:'Vacancy sub-4% across Hillsborough/Pinellas. No meaningful new IOS supply delivered in 18 months. Rents up 14% YOY.',
+   action:'Target owners sitting on IOS-compatible sites 1–5 acres. Multiple tenants actively seeking. Pitch sale-leaseback + leaseback at market rate.',
+   date:'May 2026'},
+  {id:'f4',lat:35.47,lng:-97.52,type:'Lease Risk',urgency:'monitor',
+   title:'OKC — EquipmentShare at 3108 W Reno Ave',
+   signal:'Active deal. EquipmentShare executing lease. Phase I environmental near resolution. City change-of-use filed April 20.',
+   action:'Ryan managing LH Capital side. Moir Park Capital buyer. Keep EPD timeline moving — targeting Q3 close.',
+   date:'May 2026'},
+  {id:'f5',lat:33.96,lng:-84.28,type:'Off-Market Target',urgency:'monitor',
+   title:'Alpharetta EMI — EPD Gating',
+   signal:'1655 McFarland 400 Dr. PSA signed x3. Georgia EPD ruling on Release Notification Package blocking lender funding. Ruling expected mid-July to mid-August.',
+   action:'Hold position. Maintain weekly contact with Hayes Brewer (Oakley). Resolve commission calc before closing.',
+   date:'May 2026'},
+  {id:'f6',lat:36.72,lng:-76.00,type:'Off-Market Target',urgency:'context',
+   title:'Engineers Road — Off-Market Opportunity',
+   signal:'2211-2217 Engineers Road, ~102K SF at ~$40 PSF ($4.1M). Forwarded by Ryan Hutkowski from Edward Duke. Occupancy and lease expirations TBD.',
+   action:'Clarify whether Hayes Brewer is owner or listing broker. Pull rent roll. Target sub-$10M buyer (Rycore threshold applies — use institutional partner vehicle).',
+   date:'May 2026'}
+];
+
+function renderOpportunityFlags(){
+  flagMarkers.forEach(m=>m.remove());flagMarkers=[];
+  if(!leafletMap||!mapLayers.flags)return;
+  OPPORTUNITY_FLAGS.forEach(f=>{
+    const colors={urgent:'#EF4444',monitor:'#F59E0B',context:'#94A3B8'};
+    const c=colors[f.urgency]||'#64748B';
+    const icon=L.divIcon({className:'',
+      html:`<div style="position:relative;width:20px;height:20px">
+        <div class="opp-flag-pulse" style="position:absolute;inset:0;border-radius:50%;background:${c};opacity:0.3"></div>
+        <div style="position:absolute;inset:4px;border-radius:50%;background:${c};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,0.4)"></div>
+      </div>`,iconSize:[20,20],iconAnchor:[10,10]});
+    const urgLabel={urgent:'🔴 Call Today',monitor:'🟡 Monitor',context:'⚪ Context'}[f.urgency]||'';
+    const popup=`<div style="font-size:12px;min-width:240px;max-width:320px;line-height:1.5">
+      <div style="background:${c};padding:6px 12px;color:#fff">
+        <div style="font-size:8px;font-weight:700;letter-spacing:0.14em;opacity:0.85">${f.type.toUpperCase()} · ${urgLabel}</div>
+        <div style="font-size:13px;font-weight:700;margin-top:2px">${f.title}</div>
+      </div>
+      <div style="padding:12px">
+        <div style="font-size:11px;color:#334155;margin-bottom:8px"><b>Signal:</b> ${f.signal}</div>
+        <div style="font-size:11px;color:#05014B;background:#F0F4FF;padding:8px;border-left:3px solid #05014B"><b>Action:</b> ${f.action}</div>
+        <div style="font-size:10px;color:#94A3B8;margin-top:6px">Flagged: ${f.date}</div>
+      </div>
+    </div>`;
+    const m=L.marker([f.lat,f.lng],{icon}).addTo(leafletMap).bindPopup(popup,{maxWidth:320});
+    flagMarkers.push(m);
+  });
+}
+
+// ═══════════════════════════════════════════════════════
+// TIER 3 — ZONING INTELLIGENCE
+// ═══════════════════════════════════════════════════════
+function renderZoningPins(){
+  zoningMarkers.forEach(m=>m.remove());zoningMarkers=[];
+  if(!leafletMap||!mapLayers.zoning)return;
+  const toPlot=mapProperties.filter(p=>p.TTL_Core__Latitude__c&&p.TTL_Core__Longitude__c&&p.IOS_Allowed__c);
+  const colorMap={'Yes':'#16a34a','Conditional':'#f59e0b','No':'#ef4444','Unknown':'#94A3B8'};
+  toPlot.forEach(p=>{
+    const lat=parseFloat(p.TTL_Core__Latitude__c),lng=parseFloat(p.TTL_Core__Longitude__c);
+    if(!lat||!lng)return;
+    const allowed=p.IOS_Allowed__c||'Unknown';
+    const c=colorMap[allowed]||'#94A3B8';
+    const score=p.IOS_Zoning_Score__c;
+    const addr=p.TTL_Core__Address__c||p.Name||'—';
+    const icon=L.divIcon({className:'',
+      html:`<div style="width:10px;height:10px;border-radius:50%;background:${c};border:2px solid rgba(0,0,0,0.25);box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
+      iconSize:[10,10],iconAnchor:[5,5]});
+    const popup=`<div style="font-size:12px;min-width:190px;line-height:1.5">
+      <div style="background:${c};padding:4px 10px;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.1em">IOS: ${allowed.toUpperCase()}</div>
+      <div style="padding:8px 10px">
+        <div style="font-weight:700;color:#05014B">${addr}</div>
+        <div style="color:#64748B;font-size:11px">${[p.TTL_Core__City__c,p.TTL_Core__State__c].filter(Boolean).join(', ')}</div>
+        ${score!=null?`<div style="margin-top:4px;font-size:11px">IOS Score: <b style="color:${c}">${score}/100</b></div>`:''}
+        ${p.IOS_Allowance_Type__c?`<div style="font-size:10px;color:#64748B">${p.IOS_Allowance_Type__c}</div>`:''}
+        <div style="margin-top:6px"><button onclick="sfOpenInSalesforce('${p.Id}')" style="background:#05014B;color:#fff;border:none;padding:4px 10px;font-size:9px;font-weight:700;cursor:pointer;width:100%">Open in SF ↗</button></div>
+      </div>
+    </div>`;
+    const m=L.marker([lat,lng],{icon}).addTo(leafletMap).bindPopup(popup);
+    zoningMarkers.push(m);
+  });
+  const lz=document.getElementById('lc-zoning');if(lz)lz.textContent=zoningMarkers.length;
+}
+
+// ═══════════════════════════════════════════════════════
+// TIER 3 — PROPERTY SCORES
+// ═══════════════════════════════════════════════════════
+function renderScorePins(){
+  scoreMarkers.forEach(m=>m.remove());scoreMarkers=[];
+  if(!leafletMap||!mapLayers.scores)return;
+  const toPlot=mapProperties.filter(p=>p.TTL_Core__Latitude__c&&p.TTL_Core__Longitude__c&&p.Intelligence_Score__c!=null);
+  toPlot.forEach(p=>{
+    const lat=parseFloat(p.TTL_Core__Latitude__c),lng=parseFloat(p.TTL_Core__Longitude__c);
+    if(!lat||!lng)return;
+    const score=Math.round(p.Intelligence_Score__c);
+    const c=score>=80?'#16a34a':score>=60?'#f59e0b':'#ef4444';
+    const sz=Math.max(14,Math.min(28,10+Math.round(score/5)));
+    const addr=p.TTL_Core__Address__c||p.Name||'—';
+    const icon=L.divIcon({className:'',
+      html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${c};border:2px solid rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-size:${Math.max(7,sz-8)}px;font-weight:800;color:#fff;box-shadow:0 2px 6px rgba(0,0,0,0.3)">${score}</div>`,
+      iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+    const popup=`<div style="font-size:12px;min-width:190px;line-height:1.5">
+      <div style="background:${c};padding:4px 10px;color:#fff;display:flex;align-items:center;gap:8px">
+        <div style="font-size:20px;font-weight:800">${score}</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.1em">INTEL SCORE</div>
+      </div>
+      <div style="padding:8px 10px">
+        <div style="font-weight:700;color:#05014B">${addr}</div>
+        <div style="color:#64748B;font-size:11px">${[p.TTL_Core__City__c,p.TTL_Core__State__c].filter(Boolean).join(', ')}</div>
+        ${p.IOS_Zoning_Score__c!=null?`<div style="font-size:11px;margin-top:4px">IOS Score: <b>${p.IOS_Zoning_Score__c}/100</b></div>`:''}
+        ${p.TTL_Core__Property_Type__c?`<div style="font-size:10px;color:#64748B">${p.TTL_Core__Property_Type__c}</div>`:''}
+        <div style="margin-top:6px"><button onclick="sfOpenInSalesforce('${p.Id}')" style="background:#7C3AED;color:#fff;border:none;padding:4px 10px;font-size:9px;font-weight:700;cursor:pointer;width:100%">Open in SF ↗</button></div>
+      </div>
+    </div>`;
+    const m=L.marker([lat,lng],{icon}).addTo(leafletMap).bindPopup(popup);
+    scoreMarkers.push(m);
+  });
+  const ls=document.getElementById('lc-scores');if(ls)ls.textContent=scoreMarkers.length;
+}
+
+// ═══════════════════════════════════════════════════════
+// TIER 3 — TENANT LOCATIONS (IOS-relevant, FL)
+// ═══════════════════════════════════════════════════════
+const FL_TENANT_LOCATIONS=[
+  {name:'Ryder Logistics',addr:'4661 Apopka Logistics Pky',city:'Apopka',lat:28.69,lng:-81.54,type:'Fleet/Truck',sf:1199374,rent:'$6.85 NNN'},
+  {name:'Ferguson Enterprises',addr:'10990 Boggy Creek Rd',city:'Orlando',lat:28.44,lng:-81.36,type:'Building Supply',sf:null},
+  {name:'United Facilities',addr:'201 Gills Dr',city:'Orlando',lat:28.46,lng:-81.41,type:'Contractor Yard',sf:null},
+  {name:"Lowe's Distribution",addr:'2651 Ham Brown Rd',city:'Kissimmee',lat:28.27,lng:-81.41,type:'Building Supply',sf:1353669},
+  {name:'Amazon Distribution',addr:'4401 Seaboard Rd',city:'Orlando',lat:28.59,lng:-81.42,type:'Distribution',sf:1086384},
+  {name:'McKesson Corporation',addr:'3056 Tradeport Dr',city:'Orlando',lat:28.44,lng:-81.37,type:'Distribution',sf:null},
+  {name:'McLane Company',addr:'1818 S Poinciana Blvd',city:'Kissimmee',lat:28.23,lng:-81.39,type:'Distribution',sf:null},
+  {name:'Essendant',addr:'2405 Commerce Park Dr',city:'Orlando',lat:28.46,lng:-81.38,type:'Distribution',sf:null},
+  {name:'NFI Industries',addr:'901 W Landstreet Rd',city:'Orlando',lat:28.41,lng:-81.39,type:'Fleet/Truck',sf:null},
+  {name:'Cold-Link Logistics',addr:'2560 W Orange Blossom Trl',city:'Apopka',lat:28.69,lng:-81.53,type:'Cold Storage',sf:null},
+  {name:'Samsung Distribution',addr:'19925 Independence Blvd',city:'Groveland',lat:28.56,lng:-81.85,type:'Distribution',sf:null},
+  {name:'United Facilities',addr:'11401 United Way',city:'Orlando',lat:28.46,lng:-81.40,type:'Contractor Yard',sf:null},
+  {name:'TJ Maxx Distribution',addr:'Innovation Way',city:'Orlando',lat:28.42,lng:-81.18,type:'Distribution',sf:2000000},
+  {name:'Sunstate Equipment',addr:'Tampa',city:'Tampa',lat:27.95,lng:-82.45,type:'Equipment Rental',sf:null},
+  {name:'United Rentals',addr:'Tampa',city:'Tampa',lat:27.97,lng:-82.47,type:'Equipment Rental',sf:null},
+  {name:'Sunbelt Rentals',addr:'Tampa',city:'Tampa',lat:27.96,lng:-82.46,type:'Equipment Rental',sf:null},
+  {name:'ABC Supply Co',addr:'Jacksonville',city:'Jacksonville',lat:30.32,lng:-81.66,type:'Roofing Supply',sf:null},
+  {name:'Beacon Roofing Supply',addr:'Jacksonville',city:'Jacksonville',lat:30.30,lng:-81.65,type:'Roofing Supply',sf:null},
+  {name:'Waste Pro USA',addr:'Pompano Beach',city:'Pompano Beach',lat:26.23,lng:-80.12,type:'Waste Management',sf:null},
+  {name:'Republic Services',addr:'Medley',city:'Medley',lat:25.82,lng:-80.35,type:'Waste Management',sf:null},
+  {name:'Penske Truck Leasing',addr:'Fort Lauderdale',city:'Fort Lauderdale',lat:26.09,lng:-80.16,type:'Fleet/Truck',sf:null},
+  {name:'Ryder System',addr:'Miami',city:'Miami',lat:25.79,lng:-80.21,type:'Fleet/Truck',sf:null},
+  {name:'White Cap Construction',addr:'Orlando',city:'Orlando',lat:28.53,lng:-81.38,type:'Building Supply',sf:null},
+  {name:'GMS Building Supply',addr:'Tampa',city:'Tampa',lat:27.98,lng:-82.43,type:'Roofing Supply',sf:null},
+  {name:'Ring Power Corp',addr:'Jacksonville',city:'Jacksonville',lat:30.28,lng:-81.74,type:'Equipment Rental',sf:null},
+  {name:'Neff Rentals',addr:'Miami',city:'Miami',lat:25.84,lng:-80.28,type:'Equipment Rental',sf:null},
+  {name:'Branch Civil',addr:'Lakeland',city:'Lakeland',lat:28.04,lng:-81.95,type:'Contractor Yard',sf:null},
+  {name:'Superior Industries',addr:'Tampa',city:'Tampa',lat:27.93,lng:-82.50,type:'Building Supply',sf:null},
+  {name:'Arrow Trucking',addr:'Orlando',city:'Orlando',lat:28.50,lng:-81.43,type:'Fleet/Truck',sf:null},
+  {name:'Interstate Batteries',addr:'Orlando',city:'Orlando',lat:28.52,lng:-81.41,type:'Distribution',sf:null}
+];
+
+const TENANT_ARCHETYPE_COLORS={
+  'Equipment Rental':'#0891B2','Roofing Supply':'#7C3AED','Building Supply':'#EA580C',
+  'Fleet/Truck':'#1D4ED8','Contractor Yard':'#15803D','Distribution':'#DC2626',
+  'Cold Storage':'#0D9488','Waste Management':'#78716C'
+};
+
+function renderTenantPins(){
+  tenantMarkers.forEach(m=>m.remove());tenantMarkers=[];
+  if(!leafletMap||!mapLayers.tenants)return;
+  FL_TENANT_LOCATIONS.forEach(t=>{
+    const c=TENANT_ARCHETYPE_COLORS[t.type]||'#64748B';
+    const icon=L.divIcon({className:'',
+      html:`<div style="width:9px;height:9px;border-radius:2px;background:${c};border:1.5px solid rgba(0,0,0,0.3);transform:rotate(45deg)"></div>`,
+      iconSize:[9,9],iconAnchor:[4,4]});
+    const popup=`<div style="font-size:12px;min-width:170px;line-height:1.5">
+      <div style="background:${c};padding:3px 10px;color:#fff;font-size:9px;font-weight:700;letter-spacing:0.1em">${t.type.toUpperCase()}</div>
+      <div style="padding:8px 10px">
+        <div style="font-weight:700;color:#05014B">${t.name}</div>
+        <div style="color:#64748B;font-size:11px">${t.addr}, ${t.city}, FL</div>
+        ${t.sf?`<div style="font-size:11px;color:#64748B">${Number(t.sf).toLocaleString()} SF</div>`:''}
+        ${t.rent?`<div style="font-size:11px;color:#334155">${t.rent}</div>`:''}
+      </div>
+    </div>`;
+    const m=L.marker([t.lat,t.lng],{icon}).addTo(leafletMap).bindPopup(popup);
+    tenantMarkers.push(m);
+  });
+  const lt=document.getElementById('lc-tenants');if(lt)lt.textContent=tenantMarkers.length;
+}
+
+function openPropertyDrawer(p){
+  if(!p)return;
+  const addr=p.TTL_Core__Address__c||p.Name||'—';
+  const city=p.TTL_Core__City__c||'';const state=p.TTL_Core__State__c||'';
+  const sf=p.TTL_Core__Gross_SF__c;
+  const rows=[
+    ['Address', addr],
+    ['City / State', [city,state].filter(Boolean).join(', ')||'—'],
+    ['Property Type', p.TTL_Core__Property_Type__c||'—'],
+    ['Building SF', sf?Number(sf).toLocaleString()+' SF':'—'],
+    ['Submarket', p.TTL_Core__Submarket__c||p.TTL_Core__Market__c||'—'],
+    ['County', p.TTL_Core__County__c||'—'],
+    ['IOS Allowed', p.IOS_Allowed__c||'—'],
+    ['IOS Score', p.IOS_Zoning_Score__c!=null?p.IOS_Zoning_Score__c+'/100':'—'],
+    ['Intel Score', p.Intelligence_Score__c!=null?p.Intelligence_Score__c:'—'],
+    ['Tenant', p.Current_Tenant__c||'—'],
+  ].filter(r=>r[1]!=='—'||['Address','Property Type','Building SF'].includes(r[0]));
+
+  const iosScore=p.IOS_Zoning_Score__c;
+  const iosColor=iosScore>=80?'#16a34a':iosScore>=50?'#f59e0b':'#ef4444';
+
+  const html=`
+    <div style="background:#7C3AED;padding:14px 20px">
+      <div style="font-size:9px;font-weight:700;letter-spacing:0.14em;color:rgba(255,255,255,0.7)">PROPERTY RECORD</div>
+      <div style="font-size:15px;font-weight:700;color:#fff;margin-top:3px;line-height:1.2">${addr}</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.7);margin-top:2px">${[city,state].filter(Boolean).join(', ')}</div>
+    </div>
+    ${iosScore!=null?`<div style="background:#F4F7FB;padding:10px 20px;border-bottom:1px solid #E2E8F0;display:flex;align-items:center;gap:12px">
+      <div style="text-align:center">
+        <div style="font-size:24px;font-weight:800;color:${iosColor}">${iosScore}</div>
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#64748B">IOS Score</div>
+      </div>
+      <div style="flex:1;height:6px;background:#E2E8F0;border-radius:3px">
+        <div style="width:${iosScore}%;height:100%;background:${iosColor};border-radius:3px"></div>
+      </div>
+    </div>`:''}
+    <div style="padding:20px">
+      <table style="width:100%;border-collapse:collapse;font-size:12px">
+        ${rows.map(([k,v])=>`<tr style="border-bottom:1px solid #E2E8F0"><td style="padding:9px 0;color:#64748B;font-weight:600;width:42%;font-size:11px;text-transform:uppercase;letter-spacing:0.06em">${k}</td><td style="padding:9px 0;color:#05014B;font-weight:500">${v}</td></tr>`).join('')}
+      </table>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button onclick="sfOpenInSalesforce('${p.Id}')" style="flex:1;background:#7C3AED;color:#fff;border:none;padding:10px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Open in Salesforce ↗</button>
+      </div>
+    </div>`;
+
+  document.getElementById('drawer-body').innerHTML=html;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1182,8 +1752,10 @@ function mapFilter(){
   });
   renderCompList();plotPins();
   const ln=mapComps.filter(r=>sfCompType(r)==='lease').length,sn=mapComps.filter(r=>sfCompType(r)==='sale').length;
-  document.getElementById('map-count-bar').innerHTML=`<span style="color:#0A6EE8">● ${ln} Lease</span><span style="color:#E8400A">● ${sn} Sale</span><span>${mapFilteredComps.length} shown</span>`;
+  const expCount=mapComps.filter(r=>sfCompType(r)==='lease'&&getExpiryStatus(r)).length;
+  document.getElementById('map-count-bar').innerHTML=`<span style="color:#0A6EE8">● ${ln} Lease</span><span style="color:#E8400A">● ${sn} Sale</span>${expCount?`<span style="color:#F97316">⚠ ${expCount} exp</span>`:''}`;
   const bb=document.getElementById('bov-launch-btn');if(bb){bb.style.display=mapFilteredComps.length>0&&!activityOpen?'block':'none';bb.textContent=`📄 Create BOV from ${mapFilteredComps.length} Comp${mapFilteredComps.length===1?'':'s'}`;}
+  updateLayerCounts();
 }
 
 // ═══════════════════════════════════════════════════════
@@ -1209,6 +1781,11 @@ function renderCompList(){
     const cap=(type==='sale'&&r.TTL_Core__Cap_Rate_YR_1__c)?` · ${Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(1)}% cap`:'';
     const conf=r.Confirmed__c?`<span style="font-size:9px;font-weight:700;color:#16a34a;background:#dcfce7;padding:1px 5px">✓</span>`:'';
     const src=isPartner&&r.Source__c?`<span style="font-size:9px;color:#94A3B8">${r.Source__c}</span>`:'';
+    // Expiry badge
+    const expStatus=type==='lease'?getExpiryStatus(r):null;
+    const expBadge=expStatus==='urgent'?`<span class="exp-badge exp-near">⚠ Exp Soon</span>`:
+                   expStatus==='near'?`<span class="exp-badge exp-urgent">📅 &lt;1yr</span>`:
+                   expStatus==='watch'?`<span class="exp-badge" style="background:#e0e7ff;color:#3730a3">Watch</span>`:'';
     return `<div class="map-comp-item" onclick="focusComp(${i})" id="mci-${i}">
       <div style="display:flex;align-items:flex-start;gap:8px">
         <div style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:5px;flex-shrink:0"></div>
@@ -1219,7 +1796,7 @@ function renderCompList(){
             ${val?`<span style="font-size:12px;font-weight:700;color:#05014B">${val}${cap}</span>`:''}
             ${sf?`<span style="font-size:10px;color:#94A3B8">${Number(sf).toLocaleString()} SF</span>`:''}
             ${date?`<span style="font-size:10px;color:#94A3B8">${date}</span>`:''}
-            ${conf}${src}
+            ${conf}${src}${expBadge}
           </div>
         </div>
       </div>
@@ -1242,6 +1819,7 @@ async function geocodeAddress(addr,city,state){
 async function plotPins(){
   if(!leafletMap)return;
   mapMarkers.forEach(m=>m.remove());mapMarkers=[];
+  if(!mapLayers.comps)return;
   const toPlot=mapFilteredComps.slice(0,500);let plotted=0;let geocodeQueue=0;
   const u=appGetUser();const isPartner=!u||u.tier==='partner';
   for(const r of toPlot){
@@ -1257,19 +1835,42 @@ async function plotPins(){
       geocodeQueue++;
     }
     if(!coords)continue;
-    const type=sfCompType(r),color=type==='lease'?'#0A6EE8':'#E8400A';
+    const type=sfCompType(r);
+    let color=type==='lease'?'#0A6EE8':'#E8400A';
+    // Expiring override
+    if(mapLayers.expiring&&type==='lease'){
+      const es=getExpiryStatus(r);
+      if(es==='urgent')color='#DC2626';
+      else if(es==='near')color='#F97316';
+      else if(es==='watch')color='#FBBF24';
+    }
     const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
     const conf=r.Confirmed__c;
+    const expSt=type==='lease'?getExpiryStatus(r):null;
+    const expHtml=expSt?`<div style="font-size:10px;font-weight:700;color:${expSt==='urgent'?'#DC2626':expSt==='near'?'#F97316':'#FBBF24'}">⚠ Exp: ${r.TTL_Core__Lease_Expiration__c?.slice(0,10)||''}</div>`:'';
     let val='';
     if(type==='sale'&&r.TTL_Core__Price_total__c)val=`$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
     else if(type==='lease'&&r.TTL_Core__Rent_SF_Year__c)val=`$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
     const cap=(type==='sale'&&r.TTL_Core__Cap_Rate_YR_1__c)?`<div style="font-size:11px;color:#64748B">${Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(1)}% cap rate</div>`:'';
     const srcHtml=isPartner&&r.Source__c?`<div style="font-size:10px;color:#94A3B8">${r.Source__c}</div>`:'';
-    const icon=L.divIcon({className:'',html:`<div style="width:${conf?14:10}px;height:${conf?14:10}px;border-radius:50%;background:${color};border:${conf?'2px solid #fff':'1.5px solid rgba(255,255,255,0.7)'};box-shadow:0 1px 4px rgba(0,0,0,0.25)"></div>`,iconSize:[conf?14:10,conf?14:10],iconAnchor:[conf?7:5,conf?7:5]});
-    const marker=L.marker([coords.lat,coords.lng],{icon}).addTo(leafletMap).bindPopup(`<div style="font-size:12px;min-width:190px;line-height:1.5"><div style="font-weight:700;color:#05014B;margin-bottom:2px">${addr}</div><div style="color:#64748B;font-size:11px;margin-bottom:6px">${city}, ${state}${r.TTL_Core__Property_Subtype__c?' · '+r.TTL_Core__Property_Subtype__c:''}</div>${val?`<div style="font-weight:700;color:${color};font-size:14px">${val}</div>`:''} ${cap}${sf?`<div style="color:#64748B;font-size:11px">${Number(sf).toLocaleString()} SF</div>`:''} ${r.TTL_Core__Close_Deal_Date__c?`<div style="color:#94A3B8;font-size:10px">${r.TTL_Core__Close_Deal_Date__c.slice(0,7)}</div>`:''} ${conf?`<div style="font-size:10px;color:#16a34a;font-weight:600">✓ Confirmed</div>`:''} ${srcHtml}</div>`);
+    const sz=conf?14:10;
+    const icon=L.divIcon({className:'',html:`<div style="width:${sz}px;height:${sz}px;border-radius:50%;background:${color};border:${conf?'2px solid #fff':'1.5px solid rgba(255,255,255,0.7)'};box-shadow:0 1px 4px rgba(0,0,0,0.25)"></div>`,iconSize:[sz,sz],iconAnchor:[sz/2,sz/2]});
+    const popup=`<div style="font-size:12px;min-width:190px;line-height:1.5">
+      <div style="font-weight:700;color:#05014B;margin-bottom:2px">${addr}</div>
+      <div style="color:#64748B;font-size:11px;margin-bottom:6px">${city}, ${state}${r.TTL_Core__Property_Subtype__c?' · '+r.TTL_Core__Property_Subtype__c:''}</div>
+      ${val?`<div style="font-weight:700;color:${color};font-size:14px">${val}</div>`:''}
+      ${cap}${expHtml}
+      ${sf?`<div style="color:#64748B;font-size:11px">${Number(sf).toLocaleString()} SF</div>`:''}
+      ${conf?`<div style="font-size:10px;color:#16a34a;font-weight:600">✓ Confirmed</div>`:''}
+      ${srcHtml}
+      <div style="margin-top:6px"><button onclick="openCompDrawer(window._mapCompsById['${r.Id}'])" style="background:#05014B;color:#FFC000;border:none;padding:4px 8px;font-size:9px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;width:100%">Full Detail →</button></div>
+    </div>`;
+    const marker=L.marker([coords.lat,coords.lng],{icon}).addTo(leafletMap).bindPopup(popup);
+    marker.on('click',()=>{openCompDrawer(r);});
     mapMarkers.push(marker);plotted++;
   }
-  if(mapMarkers.length>0){const g=L.featureGroup(mapMarkers);leafletMap.fitBounds(g.getBounds().pad(0.1));}
+  window._mapCompsById={};mapFilteredComps.forEach(r=>{window._mapCompsById[r.Id]=r;});
+  if(mapMarkers.length>0&&plotted===mapMarkers.length){const g=L.featureGroup(mapMarkers);try{leafletMap.fitBounds(g.getBounds().pad(0.1));}catch(e){}}
 }
 function focusComp(i){
   document.querySelectorAll('.map-comp-item').forEach(el=>el.classList.remove('map-comp-selected'));
@@ -1591,6 +2192,7 @@ window.appLogin = appLogin;
 window.appLogout = appLogout;
 window.openMapAfterLogin = openMapAfterLogin;
 window.sfLogout = sfLogout;
+window.sfToggleMap = sfToggleMap;
 window.showPage = showPage;
 window.showTab = showTab;
 window.openClosed = openClosed;
@@ -1609,6 +2211,23 @@ window.toggleIntelFeed = toggleIntelFeed;
 window.intelSignalClick = intelSignalClick;
 window.toggleActivityPanel = toggleActivityPanel;
 window.loadMapComps = loadMapComps;
+window.loadProperties = loadProperties;
+window.loadDeals = loadDeals;
+window.loadSpaces = loadSpaces;
+window.toggleLayer = toggleLayer;
+window.openPropertyDrawer = openPropertyDrawer;
+window.openCompDrawer = openCompDrawer;
+window.renderSpacePins = renderSpacePins;
+window.sfOpenInSalesforce = sfOpenInSalesforce;
+window.sfStartAuth = sfStartAuth;
+window.renderCompList = renderCompList;
+window.plotPins = plotPins;
+window.renderOpportunityFlags = renderOpportunityFlags;
+window.renderZoningPins = renderZoningPins;
+window.renderScorePins = renderScorePins;
+window.renderTenantPins = renderTenantPins;
+window.toggleLayer = toggleLayer;
+
 
 </script>
 </body>
