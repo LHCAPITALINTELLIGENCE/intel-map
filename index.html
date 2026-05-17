@@ -1013,31 +1013,68 @@ async function sfLogin(){
   if(statusEl)statusEl.textContent='Opening Salesforce login…';
   const{verifier,challenge}=await sfBuildPKCE();
   sessionStorage.setItem(_SK.verifier,verifier);
+  // Clear any stale oauth codes
+  localStorage.removeItem('sf_oauth_code');
+  localStorage.removeItem('sf_oauth_ts');
   const p=new URLSearchParams({response_type:'code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
   const popup=window.open(`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`,'sf_oauth_popup','width=620,height=720,left=200,top=80');
-  if(!popup||popup.closed){if(statusEl)statusEl.textContent='⚠ Allow popups for this site then try again.';alert('Allow popups for lhcapitalintelligence.github.io then click Connect again.');return;}
-  if(statusEl)statusEl.textContent='Waiting for Salesforce authorization…';
-  function handleOAuthMsg(event){
-    if(event.origin!==window.location.origin)return;
-    if(!event.data||event.data.type!=='sf_oauth_code')return;
-    window.removeEventListener('message',handleOAuthMsg);
-    exchangeCodeForToken(event.data.code);
+  if(!popup||popup.closed){
+    if(statusEl)statusEl.textContent='⚠ Allow popups for this site then try again.';
+    alert('Allow popups for lhcapitalintelligence.github.io then click Connect again.');
+    return;
   }
-  window.addEventListener('message',handleOAuthMsg);
-  const watchdog=setInterval(()=>{if(popup.closed){clearInterval(watchdog);window.removeEventListener('message',handleOAuthMsg);if(!sfIsAuthed()&&statusEl)statusEl.textContent='Cancelled. Click Connect to try again.';}},800);
+  if(statusEl)statusEl.textContent='Waiting for Salesforce authorization…';
+  // Poll localStorage for the auth code (works even if window.opener is nulled)
+  const poll=setInterval(()=>{
+    const code=localStorage.getItem('sf_oauth_code');
+    const ts=parseInt(localStorage.getItem('sf_oauth_ts')||'0');
+    if(code&&(Date.now()-ts)<60000){
+      clearInterval(poll);
+      localStorage.removeItem('sf_oauth_code');
+      localStorage.removeItem('sf_oauth_ts');
+      try{popup.close();}catch(e){}
+      exchangeCodeForToken(code);
+      return;
+    }
+    if(popup.closed){
+      clearInterval(poll);
+      if(!sfIsAuthed()&&statusEl)statusEl.textContent='Cancelled. Click Connect to try again.';
+    }
+  },500);
 }
 async function exchangeCodeForToken(code){
   const statusEl=document.getElementById('sf-login-status');
   if(statusEl)statusEl.textContent='Exchanging authorization code…';
   const verifier=sessionStorage.getItem(_SK.verifier);
-  if(!code||!verifier){if(statusEl)statusEl.textContent='Error: try again.';return;}
+  if(!code||!verifier){if(statusEl)statusEl.textContent='Error: missing code. Try again.';return;}
   const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code,code_verifier:verifier});
   try{
     const r=await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
     const d=await r.json();
-    if(d.access_token){sfStoreTokens(d.access_token,d.instance_url);sfUpdateStatus();document.getElementById('map-login-screen').style.display='none';logActivity('SF Connected');if(statusEl)statusEl.textContent='Connected!';setTimeout(()=>loadMapComps(),300);}
-    else{const msg=d.error_description||d.error||'Unknown error';if(statusEl)statusEl.textContent='SF error: '+msg;alert('SF auth failed: '+msg);}
-  }catch(e){if(statusEl)statusEl.textContent='Network error.';alert('Token exchange failed. You may need to add https://lhcapitalintelligence.github.io to SF Setup → Security → CORS\n\n'+e.message);}
+    if(d.access_token){
+      sfStoreTokens(d.access_token,d.instance_url);
+      sfUpdateStatus();
+      document.getElementById('map-login-screen').style.display='none';
+      logActivity('SF Connected');
+      if(statusEl)statusEl.textContent='Connected!';
+      setTimeout(()=>loadMapComps(),300);
+    } else {
+      const msg=d.error_description||d.error||'Unknown error';
+      if(statusEl)statusEl.textContent='SF error: '+msg;
+      alert('Salesforce auth failed: '+msg+'
+
+If this keeps happening, go to:
+SF Setup → Security → CORS
+and add: https://lhcapitalintelligence.github.io');
+    }
+  }catch(e){
+    if(statusEl)statusEl.textContent='Network error — check CORS.';
+    alert('Token exchange failed.
+
+Required fix: SF Setup → Security → CORS → add https://lhcapitalintelligence.github.io
+
+Error: '+e.message);
+  }
 }
 async function sfHandleCallback(){
   const p=new URLSearchParams(window.location.search);
@@ -1348,11 +1385,12 @@ function closeDrawer(){document.getElementById('drawer-overlay').classList.remov
 // INIT
 // ═══════════════════════════════════════════════════════
 window.addEventListener('DOMContentLoaded',()=>{
-  // OAuth popup callback: if we have ?code= and an opener, post to opener and close
+  // OAuth popup callback: store code in localStorage so main window picks it up
   const urlCode=new URLSearchParams(window.location.search).get('code');
-  if(urlCode&&window.opener&&!window.opener.closed){
-    try{window.opener.postMessage({type:'sf_oauth_code',code:urlCode},window.location.origin);}catch(e){}
-    document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;padding:60px;background:#05014B;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connecting to Salesforce…</div><div style="font-size:13px;color:rgba(255,255,255,0.5)">This window will close automatically.</div></div>';
+  if(urlCode){
+    localStorage.setItem('sf_oauth_code',urlCode);
+    localStorage.setItem('sf_oauth_ts',Date.now().toString());
+    document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;padding:60px;background:#05014B;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="width:40px;height:40px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#05014B;margin:0 auto 20px">L|H</div><div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connecting to Salesforce…</div><div style="font-size:13px;color:rgba(255,255,255,0.5)">This window will close automatically.</div></div>';
     setTimeout(()=>window.close(),2000);
     return;
   }
