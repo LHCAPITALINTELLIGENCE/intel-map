@@ -1508,3 +1508,11 @@ function intelSignalClick(id) {
     mapMarkers.forEach(m=>{
       const el = m.getElement ? m.getElement() : null;
       if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); 
+}
+    });
+  }, 200);
+}
+
+</script>
+</body>
+</html>
