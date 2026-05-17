@@ -4,37 +4,42 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>LH Capital Partners — Industrial Commercial Real Estate</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
 <style>
-:root {
-  --navy: #05014B;
-  --navy2: #0C1C52;
-  --gold: #FFC000;
-  --offwhite: #F4F7FB;
-  --ltgray: #E2E8F0;
-  --midgray: #64748B;
-  --dgray: #2D3A4A;
-  --white: #ffffff;
-}
+:root{--navy:#05014B;--navy2:#0C1C52;--gold:#FFC000;--offwhite:#F4F7FB;--ltgray:#E2E8F0;--midgray:#64748B;--dgray:#2D3A4A;--white:#ffffff}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;color:var(--dgray);background:var(--white);-webkit-font-smoothing:antialiased}
 a{color:inherit;text-decoration:none}
 img{max-width:100%;display:block}
-
+/* APP LOGIN */
+#app-login{position:fixed;inset:0;background:var(--navy);z-index:99999;display:none;align-items:center;justify-content:center}
+.al-box{background:#0C1C52;border:1px solid rgba(255,192,0,0.2);padding:48px;width:400px;max-width:92vw}
+.al-logo{display:flex;align-items:center;gap:12px;margin-bottom:36px}
+.al-logo-mark{width:40px;height:40px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--navy)}
+.al-logo-text{font-size:15px;font-weight:600;color:var(--white)}
+.al-logo-text span{color:var(--gold)}
+.al-title{font-size:22px;font-weight:700;color:var(--white);margin-bottom:6px}
+.al-sub{font-size:13px;color:rgba(255,255,255,0.45);margin-bottom:32px;line-height:1.6}
+.al-field{margin-bottom:16px}
+.al-field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:7px}
+.al-field input{width:100%;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);color:var(--white);padding:12px 14px;font-size:14px;font-family:inherit;outline:none;transition:border-color 0.15s}
+.al-field input:focus{border-color:var(--gold)}
+.al-field input::placeholder{color:rgba(255,255,255,0.25)}
+.al-btn{width:100%;background:var(--gold);color:var(--navy);border:none;padding:14px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;margin-top:8px;font-family:inherit}
+.al-error{font-size:12px;color:#f87171;margin-top:10px;display:none}
+.al-footer{font-size:11px;color:rgba(255,255,255,0.2);margin-top:28px;border-top:1px solid rgba(255,255,255,0.07);padding-top:16px}
 /* NAV */
 nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--navy);height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 40px;border-bottom:1px solid rgba(255,255,255,0.08)}
 .nav-logo{display:flex;align-items:center;gap:10px;cursor:pointer}
-.nav-logo-mark{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--navy);letter-spacing:-0.02em}
-.nav-brand{font-size:14px;font-weight:600;color:var(--white);letter-spacing:0.01em}
+.nav-logo-mark{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:var(--navy)}
+.nav-brand{font-size:14px;font-weight:600;color:var(--white)}
 .nav-brand span{color:var(--gold)}
 .nav-links{display:flex;gap:4px}
 .nav-link{font-size:12px;font-weight:500;color:rgba(255,255,255,0.6);padding:6px 12px;cursor:pointer;letter-spacing:0.04em;text-transform:uppercase;transition:color 0.15s;border-bottom:2px solid transparent}
 .nav-link:hover{color:rgba(255,255,255,0.9)}
 .nav-link.active{color:var(--white);border-bottom-color:var(--gold)}
-.nav-cta{font-size:12px;font-weight:600;color:var(--navy);background:var(--gold);padding:8px 18px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer;transition:opacity 0.15s}
-.nav-cta:hover{opacity:0.88}
-
-/* SECTIONS */
+.nav-cta{font-size:12px;font-weight:600;color:var(--navy);background:var(--gold);padding:8px 18px;letter-spacing:0.04em;text-transform:uppercase;cursor:pointer}
 .page{display:none;padding-top:64px}
 .page.active{display:block}
 section{width:100%}
@@ -43,30 +48,23 @@ section{width:100%}
 .eyebrow-navy{color:var(--navy)}
 h1{font-size:clamp(38px,5vw,64px);font-weight:700;color:var(--white);line-height:1.05;letter-spacing:-0.02em}
 h2{font-size:clamp(28px,3.5vw,44px);font-weight:700;color:var(--navy);line-height:1.1;letter-spacing:-0.02em}
-h3{font-size:20px;font-weight:600;color:var(--navy)}
 .lede{font-size:17px;color:var(--midgray);line-height:1.7;max-width:600px;margin-top:20px}
 .lede-wide{max-width:800px}
-.divider{width:40px;height:3px;background:var(--gold);margin:24px 0}
-
-/* HERO */
 .hero{background:var(--navy);padding:120px 40px 100px;min-height:600px;display:flex;align-items:center;position:relative;overflow:hidden}
 .hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 50%,rgba(255,192,0,0.06) 0%,transparent 70%)}
 .hero-inner{max-width:1160px;margin:0 auto;width:100%}
 .hero h1{max-width:700px}
 .hero-sub{font-size:18px;color:rgba(255,255,255,0.65);line-height:1.7;max-width:560px;margin-top:24px}
 .hero-btns{display:flex;gap:16px;margin-top:40px;flex-wrap:wrap}
-.btn-primary{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:14px 28px;cursor:pointer;transition:opacity 0.15s;border:none}
-.btn-primary:hover{opacity:0.88}
-.btn-outline{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;background:transparent;color:var(--white);padding:14px 28px;cursor:pointer;border:1px solid rgba(255,255,255,0.3);transition:border-color 0.15s}
-.btn-outline:hover{border-color:rgba(255,255,255,0.7)}
+.btn-primary{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;background:var(--gold);color:var(--navy);padding:14px 28px;cursor:pointer;border:none}
+.btn-outline{font-size:13px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;background:transparent;color:var(--white);padding:14px 28px;cursor:pointer;border:1px solid rgba(255,255,255,0.3)}
 .kpi-strip{background:var(--navy2);border-top:1px solid rgba(255,255,255,0.08)}
 .kpi-inner{max-width:1160px;margin:0 auto;padding:48px 40px;display:grid;grid-template-columns:repeat(4,1fr);gap:32px}
 .kpi{text-align:center}
-.kpi-num{font-size:36px;font-weight:700;color:var(--gold);letter-spacing:-0.02em}
+.kpi-num{font-size:36px;font-weight:700;color:var(--gold)}
 .kpi-label{font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.1em;text-transform:uppercase;margin-top:6px}
 .services-grid{margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:var(--ltgray)}
-.service-card{background:var(--white);padding:36px;transition:background 0.2s}
-.service-card:hover{background:var(--offwhite)}
+.service-card{background:var(--white);padding:36px}
 .service-icon{width:40px;height:40px;background:var(--navy);display:flex;align-items:center;justify-content:center;margin-bottom:20px}
 .service-icon svg{width:20px;height:20px;fill:var(--gold)}
 .service-title{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:10px}
@@ -74,70 +72,43 @@ h3{font-size:20px;font-weight:600;color:var(--navy)}
 .logos-strip{background:var(--offwhite);padding:40px;text-align:center}
 .logos-label{font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--midgray);margin-bottom:24px}
 .logos-row{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
-.logo-item{font-size:14px;font-weight:700;color:var(--midgray);letter-spacing:0.06em}
-
-/* TEAM */
+.logo-item{font-size:14px;font-weight:700;color:var(--midgray)}
 .team-grid{margin-top:56px;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:32px}
 .team-card{background:var(--offwhite);padding:32px}
 .team-name{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .team-title{font-size:12px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
-.team-creds{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+.team-creds{display:flex;gap:8px;margin-bottom:16px}
 .cred{font-size:10px;font-weight:700;letter-spacing:0.1em;background:var(--navy);color:var(--white);padding:3px 8px}
 .team-bio{font-size:13px;color:var(--midgray);line-height:1.65}
 .team-contact{margin-top:16px;font-size:12px;color:var(--midgray)}
 .team-contact a{color:var(--navy);font-weight:500}
-
-/* LISTINGS TABS */
 .tab-bar{background:var(--offwhite);border-bottom:1px solid var(--ltgray);padding:0 40px}
-.tab-bar-inner{max-width:1160px;margin:0 auto;display:flex;gap:0}
-.tab-btn{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:18px 24px;cursor:pointer;color:var(--midgray);border-bottom:3px solid transparent;transition:all 0.15s;background:none;border-top:none;border-left:none;border-right:none}
-.tab-btn:hover{color:var(--dgray)}
+.tab-bar-inner{max-width:1160px;margin:0 auto;display:flex}
+.tab-btn{font-size:12px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:18px 24px;cursor:pointer;color:var(--midgray);border-bottom:3px solid transparent;background:none;border-top:none;border-left:none;border-right:none}
 .tab-btn.active{color:var(--navy);border-bottom-color:var(--gold)}
 .tab-content{display:none}
 .tab-content.active{display:block}
-
-/* DEAL CARDS */
 .deals-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:20px;margin-top:40px}
-.deal-card{background:var(--white);border:1px solid var(--ltgray);overflow:hidden;transition:box-shadow 0.2s}
-.deal-card:hover{box-shadow:0 8px 32px rgba(5,1,75,0.1)}
+.deal-card{background:var(--white);border:1px solid var(--ltgray)}
 .deal-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;padding:4px 10px;background:var(--gold);color:var(--navy);margin-bottom:10px}
-.deal-badge.prospect{background:var(--navy);color:var(--white)}
-.deal-badge.listing{background:var(--navy2);color:var(--white)}
-.deal-badge.active{background:#e8f5e9;color:#2e7d32}
 .deal-body{padding:24px}
 .deal-name{font-size:16px;font-weight:700;color:var(--navy);margin-bottom:4px}
 .deal-addr{font-size:12px;color:var(--midgray);margin-bottom:16px}
 .deal-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .deal-stat-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray)}
 .deal-stat-val{font-size:13px;font-weight:600;color:var(--dgray);margin-top:3px}
-
-/* MARKET CARDS */
-.market-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;margin-top:40px}
-.market-card{background:var(--white);border:1px solid var(--ltgray);overflow:hidden;transition:box-shadow 0.2s}
-.market-card:hover{box-shadow:0 8px 32px rgba(5,1,75,0.1)}
-.market-img{height:160px;background:var(--offwhite) center/cover no-repeat;display:flex;align-items:flex-end}
-.market-img-placeholder{width:100%;height:160px;background:linear-gradient(135deg,var(--offwhite) 0%,var(--ltgray) 100%);display:flex;align-items:center;justify-content:center;color:var(--midgray);font-size:12px;letter-spacing:0.08em;text-transform:uppercase}
-.market-body{padding:20px}
-.market-name{font-size:15px;font-weight:700;color:var(--navy);margin-bottom:4px}
-.market-loc{font-size:12px;color:var(--midgray);margin-bottom:12px}
-.market-price{font-size:18px;font-weight:700;color:var(--navy);letter-spacing:-0.01em}
-.market-meta{font-size:12px;color:var(--midgray);margin-top:4px}
-
-/* CLOSED TRANSACTIONS */
 .closed-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;margin-top:56px}
 .closed-card{background:var(--white);border:1px solid var(--ltgray);overflow:hidden}
 .closed-img{height:220px;background:center/cover no-repeat;position:relative}
 .closed-sold-badge{position:absolute;top:14px;left:14px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:5px 12px}
 .closed-body{padding:28px}
 .closed-submarket{font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--midgray)}
-.closed-name{font-size:22px;font-weight:700;color:var(--navy);margin-top:6px;letter-spacing:-0.01em;line-height:1.15}
+.closed-name{font-size:22px;font-weight:700;color:var(--navy);margin-top:6px;line-height:1.15}
 .closed-city{font-size:13px;color:var(--midgray);margin-top:4px}
 .closed-stats{margin-top:22px;display:grid;grid-template-columns:1fr 1fr;gap:14px 24px}
 .closed-stat-label{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray)}
 .closed-stat-val{font-size:13px;font-weight:700;color:var(--dgray);margin-top:3px}
 .closed-note{margin-top:22px;padding-top:22px;border-top:1px solid var(--ltgray);font-size:13px;color:var(--midgray);line-height:1.7}
-
-/* MARKET INTEL */
 .intel-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px;margin-top:56px}
 .intel-card{background:var(--white);border:1px solid var(--ltgray);padding:28px}
 .intel-cat{font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold)}
@@ -148,64 +119,101 @@ h3{font-size:20px;font-weight:600;color:var(--navy)}
 .gate-sub{font-size:14px;color:rgba(255,255,255,0.6);line-height:1.6;margin-bottom:32px}
 .form-group{margin-bottom:20px}
 .form-label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.7);display:block;margin-bottom:8px}
-.form-input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-family:inherit;font-size:14px;padding:12px 16px;outline:none;transition:border-color 0.15s}
-.form-input:focus{border-color:var(--gold)}
+.form-input{width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--white);font-family:inherit;font-size:14px;padding:12px 16px;outline:none}
 .form-input::placeholder{color:rgba(255,255,255,0.3)}
-.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='rgba(255,255,255,0.5)' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
-.form-success{background:rgba(255,192,0,0.1);border:1px solid rgba(255,192,0,0.3);padding:20px;color:var(--gold);font-size:14px;display:none}
-
-/* CONTACT */
 .contact-grid{margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:64px}
 .contact-info-row{margin-bottom:28px}
 .contact-info-label{font-size:11px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray);margin-bottom:6px}
 .contact-info-val{font-size:15px;color:var(--navy);font-weight:500}
 .contact-form .form-input{background:var(--offwhite);border:1px solid var(--ltgray);color:var(--dgray)}
 .contact-form .form-input::placeholder{color:var(--midgray)}
-.contact-form .form-input:focus{border-color:var(--navy)}
 .contact-form .form-label{color:var(--midgray)}
-
-/* FOOTER */
-footer{background:var(--navy);padding:48px 40px;margin-top:0}
+footer{background:var(--navy);padding:48px 40px}
 .footer-inner{max-width:1160px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:24px}
 .footer-brand{font-size:14px;color:rgba(255,255,255,0.5)}
 .footer-brand strong{color:var(--white)}
 .footer-links{display:flex;gap:24px}
-.footer-link{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;transition:color 0.15s}
-.footer-link:hover{color:rgba(255,255,255,0.8)}
+.footer-link{font-size:12px;color:rgba(255,255,255,0.4);letter-spacing:0.06em;text-transform:uppercase;cursor:pointer}
 .footer-copy{font-size:12px;color:rgba(255,255,255,0.3)}
-
-/* ABOUT */
 .about-grid{margin-top:56px;display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:start}
 .about-stat-row{display:flex;flex-direction:column;gap:24px;margin-top:40px}
 .about-stat{border-left:3px solid var(--gold);padding-left:20px}
 .about-stat-num{font-size:32px;font-weight:700;color:var(--navy)}
 .about-stat-desc{font-size:13px;color:var(--midgray);margin-top:4px}
-
-/* ACQ CRITERIA */
 .acq-form{max-width:700px}
-.acq-form .form-group{margin-bottom:24px}
 .acq-form .form-input{background:var(--offwhite);border:1px solid var(--ltgray);color:var(--dgray)}
 .acq-form .form-input::placeholder{color:var(--midgray)}
-.acq-form .form-input:focus{border-color:var(--navy)}
 .acq-form .form-label{color:var(--midgray)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
 textarea.form-input{resize:vertical;min-height:100px}
-
-/* MOBILE */
-@media(max-width:768px){
-  nav{padding:0 20px}
-  .nav-links{display:none}
-  .section-inner{padding:64px 20px}
-  .hero{padding:80px 20px 64px}
-  .kpi-inner{grid-template-columns:1fr 1fr;padding:32px 20px}
-  .about-grid,.contact-grid{grid-template-columns:1fr}
-  .form-row{grid-template-columns:1fr}
-  .tab-bar{padding:0 20px}
-  .logos-row{gap:24px}
-}
+.clickable{cursor:pointer}
+/* MAP */
+#sf-status-pill:hover{opacity:0.82}
+.map-filter-btn{flex:1;border:1px solid #E2E8F0;background:#fff;color:#64748B;padding:6px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.map-filter-btn.map-filter-active{background:#05014B;color:#FFC000;border-color:#05014B}
+.map-comp-item{padding:11px 14px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background 0.1s}
+.map-comp-item:hover{background:#F4F7FB}
+.map-comp-item.map-comp-selected{background:#EEF2FF;border-left:3px solid #05014B}
+/* ADVANCED FILTERS */
+#adv-filters-panel{display:none;border-bottom:1px solid #E2E8F0;background:#FAFBFE;padding:12px 14px}
+.adv-row{margin-bottom:10px}
+.adv-label{font-size:9px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748B;margin-bottom:5px}
+.adv-subtype-grp{display:flex;flex-wrap:wrap;gap:4px}
+.adv-subtype-btn{font-size:9px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:4px 8px;border:1px solid #E2E8F0;background:#fff;color:#64748B;cursor:pointer;font-family:inherit}
+.adv-subtype-btn.active{background:#05014B;color:#FFC000;border-color:#05014B}
+.adv-inputs{display:flex;gap:6px}
+.adv-input{flex:1;border:1px solid #E2E8F0;padding:6px 8px;font-size:11px;font-family:inherit;color:#2D3A4A;outline:none}
+.adv-input:focus{border-color:#05014B}
+.adv-select{flex:1;border:1px solid #E2E8F0;padding:6px 8px;font-size:11px;font-family:inherit;color:#2D3A4A;background:#fff;outline:none}
+.adv-check-row{display:flex;align-items:center;gap:6px;cursor:pointer}
+.adv-check-row span{font-size:11px;color:#2D3A4A}
+.adv-footer{display:flex;justify-content:space-between;margin-top:10px}
+.adv-clear{font-size:10px;color:#64748B;cursor:pointer;background:none;border:none;font-family:inherit;text-decoration:underline}
+.adv-apply{font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;background:#05014B;color:#FFC000;border:none;padding:6px 14px;cursor:pointer;font-family:inherit}
+/* BOV MODAL */
+#bov-modal{display:none;position:fixed;inset:0;z-index:999999;background:rgba(5,1,75,0.75);align-items:center;justify-content:center}
+#bov-modal.open{display:flex}
+.bov-box{background:#fff;width:560px;max-width:95vw;max-height:90vh;overflow-y:auto}
+.bov-box-hdr{background:#05014B;padding:18px 24px;display:flex;justify-content:space-between;align-items:center}
+.bov-box-title{font-size:13px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#FFC000}
+.bov-box-close{background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:20px;line-height:1}
+.bov-box-body{padding:24px}
+.bov-field{margin-bottom:14px}
+.bov-field label{display:block;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#64748B;margin-bottom:5px}
+.bov-field input,.bov-field select,.bov-field textarea{width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:13px;font-family:inherit;color:#2D3A4A;outline:none}
+.bov-field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.bov-type-row{display:flex;gap:16px;margin-top:4px}
+.bov-type-row label{display:flex;align-items:center;gap:6px;font-size:12px;color:#2D3A4A;cursor:pointer;font-weight:400;letter-spacing:0}
+.bov-comp-info{background:#F4F7FB;border:1px solid #E2E8F0;padding:12px 14px;margin-bottom:20px;font-size:12px;color:#64748B}
+.bov-comp-info strong{color:#05014B}
+.bov-generate{width:100%;background:#FFC000;color:#05014B;border:none;padding:14px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:inherit;margin-top:8px}
+/* ACTIVITY */
+#activity-panel{display:none;flex-direction:column;overflow:hidden}
+#activity-panel.open{display:flex;flex:1}
+.activity-entry{padding:9px 14px;border-bottom:1px solid #E2E8F0}
+/* BOV BUTTON */
+#bov-launch-btn{display:none;margin:8px 14px;background:#05014B;color:#FFC000;border:none;padding:10px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;font-family:inherit}
+/* USER BADGE */
+.user-badge{display:flex;align-items:center;gap:8px}
+.user-init{width:26px;height:26px;border-radius:50%;background:#FFC000;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#05014B}
+.user-init.broker{background:#93c5fd;color:#1e3a5f}
+@media(max-width:768px){nav{padding:0 20px}.nav-links{display:none}.section-inner{padding:64px 20px}.hero{padding:80px 20px 64px}.kpi-inner{grid-template-columns:1fr 1fr;padding:32px 20px}.about-grid,.contact-grid{grid-template-columns:1fr}.form-row{grid-template-columns:1fr}.logos-row{gap:24px}}
 </style>
 </head>
 <body>
+<!-- APP LOGIN OVERLAY -->
+<div id="app-login" style="display:none;position:fixed;inset:0;background:var(--navy);z-index:99999;align-items:center;justify-content:center">
+  <div class="al-box">
+    <div class="al-logo"><div class="al-logo-mark">L|H</div><div class="al-logo-text">LH Capital <span>Intelligence</span></div></div>
+    <div class="al-title">Sign In</div>
+    <div class="al-sub">Internal tool — LH Capital Partners team only.</div>
+    <div class="al-field"><label>Username</label><input id="app-username" type="text" placeholder="username" autocomplete="username" onkeydown="if(event.key==='Enter')appLogin()"></div>
+    <div class="al-field"><label>Password</label><input id="app-password" type="password" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')appLogin()"></div>
+    <button class="al-btn" onclick="appLogin()">Sign In →</button>
+    <div class="al-error" id="app-error">Incorrect username or password.</div>
+    <div class="al-footer">Session expires when tab closes · LH Capital Partners</div>
+  </div>
+</div>
 
 <nav>
   <div class="nav-logo" onclick="showPage('home')">
@@ -707,31 +715,22 @@ textarea.form-input{resize:vertical;min-height:100px}
   </div>
 </footer>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     LH CAPITAL INTELLIGENCE MAP (v12)
-     Full-screen map overlay with live Salesforce comp data
-     RecordType IDs: Lease=0128Y0000014yULQAY Sale=0128Y0000014yUMQAY
-═════════════════════════════════════════════════════════════════ -->
-
-<!-- Leaflet CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<!-- ═══════════════════════════════════════════════════════
+     LH CAPITAL INTELLIGENCE MAP v13
+     Auth: SF OAuth PKCE — DO NOT CHANGE CONFIG
+     RecordTypes: Lease=0128Y0000014yULQAY Sale=0128Y0000014yUMQAY
+     New v13: App login gate, access tiers, advanced filters,
+     activity log, enhanced comp cards, BOV generator
+═══════════════════════════════════════════════════════ -->
 
 <!-- SF Status Pill -->
-<div id="sf-status-pill" onclick="sfToggleMap()" title="LH Capital · Intelligence Map" style="
-  position:fixed;bottom:20px;right:20px;z-index:100000;
-  background:#05014B;border:1px solid rgba(255,255,255,0.12);
-  display:flex;align-items:center;gap:7px;
-  padding:8px 14px;cursor:pointer;
-  box-shadow:0 4px 20px rgba(5,1,75,0.45);
-  transition:opacity 0.15s">
+<div id="sf-status-pill" onclick="sfToggleMap()" style="position:fixed;bottom:20px;right:20px;z-index:100000;background:#05014B;border:1px solid rgba(255,255,255,0.12);display:flex;align-items:center;gap:7px;padding:8px 14px;cursor:pointer;box-shadow:0 4px 20px rgba(5,1,75,0.45)">
   <div id="sf-status-dot" style="width:8px;height:8px;border-radius:50%;background:#ef4444;flex-shrink:0;transition:background 0.3s"></div>
   <span id="sf-status-label" style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.65)">SF Offline</span>
 </div>
 
 <!-- Full-screen Intelligence Map Overlay -->
-<div id="sf-map-overlay" style="
-  display:none;position:fixed;inset:0;z-index:99999;
-  background:#f4f7fb;flex-direction:column">
+<div id="sf-map-overlay" style="display:none;position:fixed;inset:0;z-index:99999;background:#f4f7fb;flex-direction:column">
 
   <!-- Map Header -->
   <div style="background:#05014B;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:1000">
@@ -739,12 +738,14 @@ textarea.form-input{resize:vertical;min-height:100px}
       <div style="width:28px;height:28px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#05014B">L|H</div>
       <div>
         <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4)">LH Capital Partners</div>
-        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map</div>
+        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:400">v13</span></div>
       </div>
-      <div id="map-status-badge" style="margin-left:8px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)"></div>
+      <div id="map-status-badge" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)"></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <button id="map-disconnect-btn" onclick="sfLogout()" style="display:none;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Disconnect</button>
+      <div id="map-user-badge" class="user-badge" style="display:none"></div>
+      <button id="map-disconnect-btn" onclick="sfLogout()" style="display:none;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Disconnect SF</button>
+      <button onclick="appLogout()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Sign Out</button>
       <button onclick="sfToggleMap()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:22px;line-height:1;padding:2px 8px">&times;</button>
     </div>
   </div>
@@ -754,411 +755,132 @@ textarea.form-input{resize:vertical;min-height:100px}
 
     <!-- Left Sidebar -->
     <div id="map-sidebar" style="width:340px;flex-shrink:0;background:#fff;border-right:1px solid #E2E8F0;display:flex;flex-direction:column;overflow:hidden">
-      
-      <!-- Search + Filters -->
-      <div style="padding:14px;border-bottom:1px solid #E2E8F0;flex-shrink:0">
-        <input id="map-search" type="text" placeholder="Search address, city, submarket…"
-          oninput="mapFilter()"
-          style="width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;color:#2D3A4A;box-sizing:border-box"/>
-        <div style="display:flex;gap:4px;margin-top:8px">
+
+      <!-- Search + Basic Filters -->
+      <div style="padding:12px 14px;border-bottom:1px solid #E2E8F0;flex-shrink:0">
+        <input id="map-search" type="text" placeholder="Search address, city, submarket…" oninput="mapFilter()" style="width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;color:#2D3A4A"/>
+        <div style="display:flex;gap:4px;margin-top:8px;align-items:center">
           <button class="map-filter-btn map-filter-active" id="mf-all" onclick="mapSetFilter('all')">All</button>
           <button class="map-filter-btn" id="mf-lease" onclick="mapSetFilter('lease')">Lease</button>
           <button class="map-filter-btn" id="mf-sale" onclick="mapSetFilter('sale')">Sale</button>
+          <button id="adv-filters-btn" onclick="toggleAdvFilters()" style="flex:none;border:1px solid #E2E8F0;background:#fff;color:#64748B;padding:6px 10px;font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;cursor:pointer;font-family:inherit;white-space:nowrap">Filters ▼</button>
         </div>
-        <div id="map-count-bar" style="margin-top:10px;display:flex;gap:8px;font-size:10px;color:#64748B"></div>
+        <div id="map-count-bar" style="margin-top:8px;display:flex;gap:8px;font-size:10px;color:#64748B"></div>
+      </div>
+
+      <!-- Advanced Filters -->
+      <div id="adv-filters-panel">
+        <div class="adv-row"><div class="adv-label">Asset Type</div>
+          <div class="adv-subtype-grp">
+            <button class="adv-subtype-btn active" data-val="all" onclick="setSubtypeFilter('all')">All</button>
+            <button class="adv-subtype-btn" data-val="IOS" onclick="setSubtypeFilter('IOS')">IOS</button>
+            <button class="adv-subtype-btn" data-val="Small Bay" onclick="setSubtypeFilter('Small Bay')">Small Bay</button>
+            <button class="adv-subtype-btn" data-val="Warehouse" onclick="setSubtypeFilter('Warehouse')">Warehouse</button>
+            <button class="adv-subtype-btn" data-val="Flex" onclick="setSubtypeFilter('Flex')">Flex</button>
+            <button class="adv-subtype-btn" data-val="Distribution" onclick="setSubtypeFilter('Distribution')">Distribution</button>
+          </div>
+        </div>
+        <div class="adv-row"><label class="adv-check-row"><input type="checkbox" id="adv-confirmed" onchange="applyAdvFilters()"> <span>Confirmed (OM-sourced) only</span></label></div>
+        <div class="adv-row"><div class="adv-label">Year Closed</div>
+          <div class="adv-inputs">
+            <input class="adv-input" id="adv-year-from" type="number" placeholder="From 2022" min="2015" max="2026" onchange="applyAdvFilters()">
+            <input class="adv-input" id="adv-year-to" type="number" placeholder="To 2026" min="2015" max="2026" onchange="applyAdvFilters()">
+          </div>
+        </div>
+        <div class="adv-row"><div class="adv-label">SF Range</div>
+          <div class="adv-inputs">
+            <input class="adv-input" id="adv-sf-min" type="number" placeholder="Min SF" onchange="applyAdvFilters()">
+            <input class="adv-input" id="adv-sf-max" type="number" placeholder="Max SF" onchange="applyAdvFilters()">
+          </div>
+        </div>
+        <div class="adv-row"><div class="adv-label">Submarket</div>
+          <select class="adv-select" id="adv-submarket" onchange="applyAdvFilters()"><option value="all">All Submarkets</option></select>
+        </div>
+        <div class="adv-footer">
+          <button class="adv-clear" onclick="clearAdvFilters()">× Clear all</button>
+          <button class="adv-apply" onclick="applyAdvFilters()">Apply →</button>
+        </div>
       </div>
 
       <!-- Comp List -->
       <div id="map-comp-list" style="flex:1;overflow-y:auto"></div>
+
+      <!-- Activity Panel (toggled) -->
+      <div id="activity-panel">
+        <div style="padding:10px 14px;border-bottom:1px solid #E2E8F0;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#05014B">Activity Log</div>
+          <button onclick="toggleActivityPanel()" style="background:none;border:none;font-size:10px;color:#64748B;cursor:pointer;font-family:inherit">← Back</button>
+        </div>
+        <div id="activity-log-list" style="flex:1;overflow-y:auto"></div>
+      </div>
+
+      <!-- BOV Button -->
+      <button id="bov-launch-btn" onclick="openBovModal()">📄 Create BOV from These Comps</button>
+
+      <!-- Sidebar Footer -->
+      <div style="padding:8px 14px;border-top:1px solid #E2E8F0;background:#fff;display:flex;justify-content:space-between;align-items:center;flex-shrink:0">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div id="sf-status-dot-2" style="width:6px;height:6px;border-radius:50%;background:#ef4444"></div>
+          <span id="sf-status-label-2" style="font-size:10px;color:#94A3B8">SF Offline</span>
+        </div>
+        <button onclick="toggleActivityPanel()" style="font-size:10px;color:#94A3B8;cursor:pointer;background:none;border:none;font-family:inherit">Activity <span id="activity-count" style="background:#E2E8F0;padding:1px 5px;border-radius:10px;font-size:9px">0</span></button>
+      </div>
     </div>
 
-    <!-- Map Container -->
+    <!-- Map -->
     <div id="leaflet-map" style="flex:1"></div>
   </div>
 
-  <!-- Login Screen (shown when not authed) -->
+  <!-- SF Login Screen -->
   <div id="map-login-screen" style="display:none;position:absolute;inset:0;background:rgba(5,1,75,0.92);z-index:10;align-items:center;justify-content:center;flex-direction:column;text-align:center">
     <div style="font-size:40px;margin-bottom:20px;opacity:0.5">🗺️</div>
-    <div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">LH Capital Intelligence Map</div>
-    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.65;margin-bottom:32px;max-width:300px">Connect to Salesforce to plot live comp data on the map.</div>
+    <div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connect to Salesforce</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:32px;max-width:300px;line-height:1.65">Authorize Salesforce to load live comp data.</div>
     <button onclick="sfLogin()" style="background:#FFC000;color:#05014B;border:none;padding:14px 32px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Connect to Salesforce</button>
-    <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:14px">Uses your Salesforce login. Session expires when tab closes.</div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:14px">Session expires when tab closes.</div>
   </div>
 </div>
 
-<style>
-#sf-status-pill:hover{opacity:0.82}
-.map-filter-btn{flex:1;border:1px solid #E2E8F0;background:#fff;color:#64748B;padding:6px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all 0.15s}
-.map-filter-btn.map-filter-active{background:#05014B;color:#FFC000;border-color:#05014B}
-.map-comp-item{padding:12px 14px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background 0.1s}
-.map-comp-item:hover{background:#F4F7FB}
-.map-comp-item.map-comp-selected{background:#EEF2FF;border-left:3px solid #05014B}
-</style>
-
-<script>
-// ═══════════════════════════════════════════════════════════════
-// SALESFORCE OAUTH PKCE — INTELLIGENCE MAP (v12)
-// ═══════════════════════════════════════════════════════════════
-
-const SF_CLIENT_ID  = '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
-const SF_ORG_DOMAIN = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
-const SF_LOGIN_HOST = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
-const SF_API_VER    = 'v60.0';
-const SF_REDIRECT   = window.location.origin + window.location.pathname;
-
-// RecordType IDs (confirmed from SF)
-const RT_LEASE = '0128Y0000014yULQAY';
-const RT_SALE  = '0128Y0000014yUMQAY';
-
-const SF_COMP_SOQL = `SELECT Id, Name,
-  TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
-  TTL_Core__Rent_SF_Year__c, Rent_Mo__c,
-  TTL_Core__Price_total__c, TTL_Core__Price_per_SF_Unit_Acre__c,
-  TTL_Core__Rentable_SF__c, TTL_Core__Gross_SF__c,
-  TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
-  TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
-  TTL_Core__Submarket__c, TTL_Core__Market__c,
-  RecordTypeId
-FROM TTL_Core__Comp__c
-WHERE IsDeleted = false
-LIMIT 2000`.trim();
-
-// ─── TOKEN STORAGE ───────────────────────────────────────────────
-const _SK = { token:'sf_at', org:'sf_iu', verifier:'sf_cv' };
-const sfGetToken  = () => sessionStorage.getItem(_SK.token);
-const sfGetOrg    = () => sessionStorage.getItem(_SK.org);
-const sfIsAuthed  = () => !!sfGetToken();
-function sfStoreTokens(access, instance) {
-  sessionStorage.setItem(_SK.token, access);
-  sessionStorage.setItem(_SK.org, instance);
-}
-function sfClearTokens() {
-  [_SK.token, _SK.org, _SK.verifier].forEach(k => sessionStorage.removeItem(k));
-}
-
-// ─── PKCE ────────────────────────────────────────────────────────
-function sfRandStr(len) {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
-  const bytes = new Uint8Array(len);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, b => chars[b % chars.length]).join('');
-}
-async function sfBuildPKCE() {
-  const verifier = sfRandStr(64);
-  const digest   = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
-  const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
-  return { verifier, challenge };
-}
-
-async function sfLogin() {
-  const { verifier, challenge } = await sfBuildPKCE();
-  sessionStorage.setItem(_SK.verifier, verifier);
-  const params = new URLSearchParams({
-    response_type:'code', client_id:SF_CLIENT_ID, redirect_uri:SF_REDIRECT,
-    code_challenge:challenge, code_challenge_method:'S256', scope:'api refresh_token'
-  });
-  window.location.href = `${SF_LOGIN_HOST}/services/oauth2/authorize?${params}`;
-}
-
-async function sfHandleCallback() {
-  const params   = new URLSearchParams(window.location.search);
-  const code     = params.get('code');
-  const verifier = sessionStorage.getItem(_SK.verifier);
-  if (!code || !verifier) return false;
-  const body = new URLSearchParams({
-    grant_type:'authorization_code', client_id:SF_CLIENT_ID,
-    redirect_uri:SF_REDIRECT, code, code_verifier:verifier
-  });
-  try {
-    const res  = await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`, {
-      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body
-    });
-    const data = await res.json();
-    if (data.access_token) {
-      sfStoreTokens(data.access_token, data.instance_url);
-      window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
-      return true;
-    }
-    return false;
-  } catch(err) { return false; }
-}
-
-async function sfQuery(soql) {
-  const token = sfGetToken(), orgUrl = sfGetOrg();
-  if (!token || !orgUrl) throw new Error('Not connected');
-  const res = await fetch(`${orgUrl}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
-  if (!res.ok) throw new Error(`SF error ${res.status}`);
-  const data = await res.json();
-  return data.records || [];
-}
-
-function sfLogout() {
-  sfClearTokens();
-  mapComps = [];
-  mapFilteredComps = [];
-  sfUpdatePill();
-  document.getElementById('map-login-screen').style.display = 'flex';
-}
-
-function sfUpdatePill() {
-  const dot = document.getElementById('sf-status-dot');
-  const lbl = document.getElementById('sf-status-label');
-  const btn = document.getElementById('map-disconnect-btn');
-  if (!dot) return;
-  if (sfIsAuthed()) {
-    dot.style.background = '#22c55e';
-    lbl.textContent = 'SF Live';
-    if (btn) btn.style.display = 'block';
-  } else {
-    dot.style.background = '#ef4444';
-    lbl.textContent = 'SF Offline';
-    if (btn) btn.style.display = 'none';
-  }
-}
-
-// ─── MAP STATE ───────────────────────────────────────────────────
-let leafletMap      = null;
-let mapComps        = [];
-let mapFilteredComps = [];
-let mapActiveFilter = 'all';
-let mapMarkers      = [];
-let geocodeCache    = {};
-let geocodeQueue    = [];
-
-function sfCompType(r) {
-  if (r.RecordTypeId === RT_LEASE) return 'lease';
-  if (r.RecordTypeId === RT_SALE)  return 'sale';
-  return 'sale'; // portfolio comps → sale
-}
-
-// ─── MAP TOGGLE ──────────────────────────────────────────────────
-function sfToggleMap() {
-  const overlay = document.getElementById('sf-map-overlay');
-  const isOpen  = overlay.style.display !== 'none';
-  if (isOpen) {
-    overlay.style.display = 'none';
-  } else {
-    overlay.style.display = 'flex';
-    if (!leafletMap) initLeaflet();
-    if (!sfIsAuthed()) {
-      document.getElementById('map-login-screen').style.display = 'flex';
-    } else {
-      document.getElementById('map-login-screen').style.display = 'none';
-      if (mapComps.length === 0) loadMapComps();
-    }
-  }
-}
-
-// ─── LEAFLET INIT ────────────────────────────────────────────────
-function initLeaflet() {
-  // Load Leaflet JS dynamically
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-  script.onload = () => {
-    leafletMap = L.map('leaflet-map', { zoomControl: true }).setView([27.8, -81.8], 7);
-    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-      attribution: '© OpenStreetMap contributors © CARTO',
-      maxZoom: 19
-    }).addTo(leafletMap);
-  };
-  document.head.appendChild(script);
-}
-
-// ─── LOAD COMPS ──────────────────────────────────────────────────
-async function loadMapComps() {
-  document.getElementById('map-status-badge').textContent = 'Loading…';
-  document.getElementById('map-comp-list').innerHTML =
-    '<div style="padding:24px;text-align:center;font-size:12px;color:#64748B">Loading comps from Salesforce…</div>';
-  try {
-    mapComps = await sfQuery(SF_COMP_SOQL);
-    document.getElementById('map-status-badge').textContent =
-      `${mapComps.length} comps loaded`;
-    mapFilter();
-  } catch(err) {
-    document.getElementById('map-comp-list').innerHTML =
-      `<div style="padding:24px;text-align:center;font-size:12px;color:#ef4444">${err.message}<br><button onclick="loadMapComps()" style="margin-top:12px;background:#05014B;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:11px">Retry</button></div>`;
-  }
-}
-
-// ─── FILTER ──────────────────────────────────────────────────────
-function mapSetFilter(type) {
-  mapActiveFilter = type;
-  ['all','lease','sale'].forEach(t => {
-    document.getElementById('mf-'+t)?.classList.toggle('map-filter-active', t === type);
-  });
-  mapFilter();
-}
-
-function mapFilter() {
-  const q = (document.getElementById('map-search')?.value || '').toLowerCase().trim();
-  mapFilteredComps = mapComps.filter(r => {
-    const typeOk = mapActiveFilter === 'all' || sfCompType(r) === mapActiveFilter;
-    const text = [r.TTL_Core__Address__c, r.TTL_Core__City__c, r.TTL_Core__State__c,
-      r.TTL_Core__Submarket__c, r.TTL_Core__Market__c, r.TTL_Core__Property_Subtype__c
-    ].join(' ').toLowerCase();
-    return typeOk && (!q || text.includes(q));
-  });
-  renderCompList();
-  plotPins();
-
-  const leaseN = mapComps.filter(r => sfCompType(r) === 'lease').length;
-  const saleN  = mapComps.filter(r => sfCompType(r) === 'sale').length;
-  document.getElementById('map-count-bar').innerHTML = `
-    <span style="color:#0A6EE8">● ${leaseN} Lease</span>
-    <span style="color:#E8400A">● ${saleN} Sale</span>
-    <span>${mapFilteredComps.length} shown</span>`;
-}
-
-// ─── RENDER LIST ─────────────────────────────────────────────────
-function renderCompList() {
-  const list = document.getElementById('map-comp-list');
-  if (!mapFilteredComps.length) {
-    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#94A3B8">No comps match your search.</div>';
-    return;
-  }
-  const shown = mapFilteredComps.slice(0, 200);
-  list.innerHTML = shown.map((r, i) => {
-    const type = sfCompType(r);
-    const dot  = type === 'lease' ? '#0A6EE8' : '#E8400A';
-    const addr = r.TTL_Core__Address__c || r.Name || '—';
-    const city = [r.TTL_Core__City__c, r.TTL_Core__State__c].filter(Boolean).join(', ');
-    const date = r.TTL_Core__Close_Deal_Date__c ? r.TTL_Core__Close_Deal_Date__c.slice(0,7) : '';
-    const sf   = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
-    let val = '';
-    if (type === 'sale' && r.TTL_Core__Price_total__c)
-      val = `$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
-    else if (type === 'lease' && r.TTL_Core__Rent_SF_Year__c)
-      val = `$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
-    else if (type === 'lease' && r.Rent_Mo__c)
-      val = `$${Number(r.Rent_Mo__c).toLocaleString()}/mo`;
-    return `<div class="map-comp-item" onclick="focusComp(${i})" id="mci-${i}">
-      <div style="display:flex;align-items:flex-start;gap:8px">
-        <div style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:4px;flex-shrink:0"></div>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:12px;font-weight:600;color:#05014B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</div>
-          <div style="font-size:11px;color:#64748B;margin-top:1px">${city}</div>
-          <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center">
-            ${val ? `<span style="font-size:12px;font-weight:700;color:#05014B">${val}</span>` : ''}
-            ${sf ? `<span style="font-size:10px;color:#94A3B8">${Number(sf).toLocaleString()} SF</span>` : ''}
-            ${date ? `<span style="font-size:10px;color:#94A3B8">${date}</span>` : ''}
-          </div>
+<!-- BOV Modal -->
+<div id="bov-modal">
+  <div class="bov-box">
+    <div class="bov-box-hdr"><div class="bov-box-title">📄 Generate Broker Opinion of Value</div><button class="bov-box-close" onclick="closeBovModal()">&times;</button></div>
+    <div class="bov-box-body">
+      <div class="bov-comp-info" id="bov-comp-info">Loading comp info…</div>
+      <div class="bov-field-row">
+        <div class="bov-field"><label>Street Address</label><input id="bov-address" type="text" placeholder="123 Industrial Blvd"></div>
+        <div class="bov-field"><label>City</label><input id="bov-city" type="text" placeholder="Tampa"></div>
+      </div>
+      <div class="bov-field-row">
+        <div class="bov-field"><label>State</label><input id="bov-state" type="text" value="FL"></div>
+        <div class="bov-field"><label>Year Built</label><input id="bov-year" type="text" placeholder="2002"></div>
+      </div>
+      <div class="bov-field-row">
+        <div class="bov-field"><label>Building SF</label><input id="bov-sf" type="text" placeholder="25,000"></div>
+        <div class="bov-field"><label>Asset Subtype</label><select id="bov-subtype"><option>Small Bay Warehouse</option><option>Warehouse / Distribution</option><option>Flex Industrial</option><option>IOS (Yard Only)</option><option>IOS + Building</option><option>Net Lease Industrial</option><option>Multi-Tenant Industrial</option></select></div>
+      </div>
+      <div class="bov-field"><label>Analysis Type</label>
+        <div class="bov-type-row">
+          <label><input type="radio" name="bov-type" value="sale" checked> Investment Sale</label>
+          <label><input type="radio" name="bov-type" value="lease"> Lease Rate Analysis</label>
         </div>
       </div>
-    </div>`;
-  }).join('');
-  if (mapFilteredComps.length > 200)
-    list.innerHTML += `<div style="padding:10px;text-align:center;font-size:10px;color:#94A3B8">Showing 200 of ${mapFilteredComps.length} — narrow your search to see more.</div>`;
-}
+      <div class="bov-field-row">
+        <div class="bov-field"><label>Asking Price (sale)</label><input id="bov-price" type="text" placeholder="$12,500,000"></div>
+        <div class="bov-field"><label>Asking Rent/SF/yr (lease)</label><input id="bov-rent" type="text" placeholder="$12.50 NNN"></div>
+      </div>
+      <div class="bov-field"><label>Notes / Context</label><textarea id="bov-notes" rows="2" style="width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:13px;font-family:inherit;outline:none;resize:none" placeholder="Describe the property, deal situation..."></textarea></div>
+      <button class="bov-generate" onclick="generateBOV()">Generate BOV →</button>
+    </div>
+  </div>
+</div>
 
-// ─── GEOCODING ───────────────────────────────────────────────────
-async function geocodeAddress(addr, city, state) {
-  const key = `${addr}, ${city}, ${state}`;
-  if (geocodeCache[key]) return geocodeCache[key];
-  const q = `${addr}, ${city}, ${state}, USA`;
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, {
-      headers: {'Accept-Language':'en', 'User-Agent':'LHCapitalIntelMap/1.0'}
-    });
-    const data = await res.json();
-    if (data[0]) {
-      const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-      geocodeCache[key] = coords;
-      return coords;
-    }
-  } catch(e) {}
-  return null;
-}
-
-// ─── PLOT PINS ───────────────────────────────────────────────────
-async function plotPins() {
-  if (!leafletMap) return;
-  // Clear old markers
-  mapMarkers.forEach(m => m.remove());
-  mapMarkers = [];
-
-  // Only plot up to 150 comps (geocode on demand)
-  const toPlot = mapFilteredComps.slice(0, 150);
-  let plotted = 0;
-
-  for (const r of toPlot) {
-    const addr  = r.TTL_Core__Address__c;
-    const city  = r.TTL_Core__City__c;
-    const state = r.TTL_Core__State__c;
-    if (!addr || !city) continue;
-
-    // Rate limit geocoding — 1 per 300ms
-    const coords = await new Promise(resolve => {
-      setTimeout(async () => resolve(await geocodeAddress(addr, city, state)), plotted * 300);
-    });
-    if (!coords) continue;
-
-    const type   = sfCompType(r);
-    const color  = type === 'lease' ? '#0A6EE8' : '#E8400A';
-    const sf     = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
-    let val = '';
-    if (type === 'sale' && r.TTL_Core__Price_total__c)
-      val = `$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
-    else if (type === 'lease' && r.TTL_Core__Rent_SF_Year__c)
-      val = `$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
-
-    const icon = L.divIcon({
-      className: '',
-      html: `<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
-      iconSize: [12, 12], iconAnchor: [6, 6]
-    });
-
-    const marker = L.marker([coords.lat, coords.lng], { icon })
-      .addTo(leafletMap)
-      .bindPopup(`<div style="font-size:12px;min-width:180px">
-        <div style="font-weight:700;color:#05014B;margin-bottom:4px">${addr}</div>
-        <div style="color:#64748B;margin-bottom:6px">${city}, ${state}</div>
-        ${val ? `<div style="font-weight:700;color:${color};font-size:13px">${val}</div>` : ''}
-        ${sf ? `<div style="color:#64748B;font-size:11px">${Number(sf).toLocaleString()} SF</div>` : ''}
-      </div>`);
-    mapMarkers.push(marker);
-    plotted++;
-  }
-
-  // Fit bounds if we have markers
-  if (mapMarkers.length > 0) {
-    const group = L.featureGroup(mapMarkers);
-    leafletMap.fitBounds(group.getBounds().pad(0.1));
-  }
-}
-
-// ─── FOCUS COMP ──────────────────────────────────────────────────
-function focusComp(i) {
-  document.querySelectorAll('.map-comp-item').forEach(el => el.classList.remove('map-comp-selected'));
-  document.getElementById('mci-'+i)?.classList.add('map-comp-selected');
-  if (mapMarkers[i]) {
-    mapMarkers[i].openPopup();
-    leafletMap?.setView(mapMarkers[i].getLatLng(), 14);
-  }
-}
-
-// ─── INIT ────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', async () => {
-  const authed = await sfHandleCallback();
-  sfUpdatePill();
-  if (authed) {
-    // Returned from SF login — open map
-    document.getElementById('sf-map-overlay').style.display = 'flex';
-    if (!leafletMap) initLeaflet();
-    document.getElementById('map-login-screen').style.display = 'none';
-    setTimeout(() => loadMapComps(), 500); // Give leaflet time to init
-  }
-});
-</script>
-
-<!-- DRAWER OVERLAY -->
-<div id="drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(5,1,75,0.45);z-index:200;transition:opacity 0.3s"></div>
-<div id="drawer" style="display:none;position:fixed;top:0;right:0;width:460px;max-width:100vw;height:100vh;background:var(--white);z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)">
-  <div style="position:sticky;top:0;background:var(--white);border-bottom:1px solid var(--ltgray);padding:16px 20px;display:flex;justify-content:space-between;align-items:center;z-index:1">
-    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--midgray)">Property Detail</div>
-    <button onclick="closeDrawer()" style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--midgray);line-height:1;padding:4px 8px">&times;</button>
+<!-- Drawer -->
+<div id="drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(5,1,75,0.45);z-index:200"></div>
+<div id="drawer" style="display:none;position:fixed;top:0;right:0;width:460px;max-width:100vw;height:100vh;background:#fff;z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)">
+  <div style="position:sticky;top:0;background:#fff;border-bottom:1px solid #E2E8F0;padding:16px 20px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#64748B">Property Detail</div>
+    <button onclick="closeDrawer()" style="background:none;border:none;cursor:pointer;font-size:20px;color:#64748B;line-height:1">&times;</button>
   </div>
   <div id="drawer-body"></div>
 </div>
@@ -1166,9 +888,434 @@ window.addEventListener('DOMContentLoaded', async () => {
 <style>
 #drawer-overlay.open{display:block}
 #drawer.open{display:block;transform:translateX(0)}
-.clickable{cursor:pointer}
-.clickable:hover .card-cta{color:var(--navy);opacity:1}
-.card-cta{font-size:12px;font-weight:600;letter-spacing:0.06em;color:var(--midgray);margin-top:14px;opacity:0.7;transition:opacity 0.15s}
 </style>
+<script>
+// ═══════════════════════════════════════════════════════
+// APP AUTH — v13
+// ═══════════════════════════════════════════════════════
+const APP_USERS = {
+  'nick':  {pw:'LHC2026!',name:'Nick Hanson',   tier:'partner',init:'NH'},
+  'ryan':  {pw:'LHC2026!',name:'Ryan Hutkowski', tier:'partner',init:'RH'},
+  'nickl': {pw:'LHC2026!',name:'Nick Ledvora',   tier:'partner',init:'NL'},
+  'tripp': {pw:'LHC2026!',name:'Tripp Duke',     tier:'partner',init:'TD'},
+  'sam':   {pw:'LHC2026!',name:'Sam Ashe',       tier:'broker', init:'SA'}
+};
+function appGetUser(){try{return JSON.parse(sessionStorage.getItem('lhc_user'));}catch(e){return null;}}
+function appLogin(){
+  const un=(document.getElementById('app-username').value||'').toLowerCase().trim();
+  const pw=document.getElementById('app-password').value;
+  const u=APP_USERS[un];
+  if(!u||u.pw!==pw){document.getElementById('app-error').style.display='block';document.getElementById('app-password').value='';return;}
+  sessionStorage.setItem('lhc_user',JSON.stringify({name:u.name,tier:u.tier,init:u.init,username:un}));
+  document.getElementById('app-login').style.display='none';
+  logActivity('Login',u.name+' · '+u.tier);
+  openMapAfterLogin();
+}
+function appLogout(){
+  sessionStorage.removeItem('lhc_user');sfClearTokens();
+  document.getElementById('sf-map-overlay').style.display='none';
+  document.getElementById('app-login').style.display='flex';
+  document.getElementById('app-password').value='';
+  document.getElementById('app-error').style.display='none';
+}
+function renderUserBadge(){
+  const u=appGetUser();const b=document.getElementById('map-user-badge');
+  if(!u||!b)return;b.style.display='flex';
+  const cls=u.tier==='broker'?'broker':'';
+  b.innerHTML=`<div class="user-init ${cls}">${u.init}</div><div style="font-size:10px;line-height:1.4"><div style="color:rgba(255,255,255,0.75);font-weight:600">${u.name}</div><div style="color:rgba(255,255,255,0.35);font-size:9px;text-transform:uppercase;letter-spacing:0.08em">${u.tier}</div></div>`;
+}
 
+// ═══════════════════════════════════════════════════════
+// ACTIVITY LOG
+// ═══════════════════════════════════════════════════════
+let activityLog=[];
+try{activityLog=JSON.parse(sessionStorage.getItem('lhc_activity')||'[]');}catch(e){}
+function logActivity(action,detail){
+  const u=appGetUser();
+  activityLog.unshift({time:new Date().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}),init:u?u.init:'??',action,detail:detail||''});
+  if(activityLog.length>50)activityLog.pop();
+  try{sessionStorage.setItem('lhc_activity',JSON.stringify(activityLog));}catch(e){}
+  const b=document.getElementById('activity-count');if(b)b.textContent=activityLog.length;
+}
+function renderActivityLog(){
+  const el=document.getElementById('activity-log-list');if(!el)return;
+  if(!activityLog.length){el.innerHTML='<div style="padding:20px;text-align:center;font-size:11px;color:#94A3B8">No activity yet.</div>';return;}
+  el.innerHTML=activityLog.map(e=>`<div class="activity-entry"><div style="display:flex;justify-content:space-between;align-items:center"><div style="display:flex;align-items:center;gap:6px"><div style="width:20px;height:20px;border-radius:50%;background:#05014B;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#FFC000">${e.init}</div><span style="font-size:11px;font-weight:600;color:#05014B">${e.action}</span></div><span style="font-size:10px;color:#94A3B8">${e.time}</span></div>${e.detail?`<div style="font-size:10px;color:#64748B;margin-top:2px;padding-left:26px">${e.detail}</div>`:''}</div>`).join('');
+}
+let activityOpen=false;
+function toggleActivityPanel(){
+  activityOpen=!activityOpen;
+  const cl=document.getElementById('map-comp-list');
+  const ap=document.getElementById('activity-panel');
+  const bl=document.getElementById('bov-launch-btn');
+  if(activityOpen){cl.style.display='none';if(bl)bl.style.display='none';ap.classList.add('open');renderActivityLog();}
+  else{cl.style.display='';if(bl&&mapFilteredComps.length>0)bl.style.display='block';ap.classList.remove('open');}
+}
+
+// ═══════════════════════════════════════════════════════
+// SF OAUTH PKCE — DO NOT MODIFY
+// ═══════════════════════════════════════════════════════
+const SF_CLIENT_ID ='3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
+const SF_LOGIN_HOST='https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
+const SF_API_VER   ='v60.0';
+const SF_REDIRECT  =window.location.origin+window.location.pathname;
+const RT_LEASE='0128Y0000014yULQAY';
+const RT_SALE ='0128Y0000014yUMQAY';
+
+const SF_COMP_SOQL=`SELECT Id, Name,
+  TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
+  TTL_Core__Rent_SF_Year__c, Rent_Mo__c,
+  TTL_Core__Price_total__c, TTL_Core__Price_per_SF_Unit_Acre__c,
+  TTL_Core__Cap_Rate_YR_1__c,
+  TTL_Core__Rentable_SF__c, TTL_Core__Gross_SF__c,
+  TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
+  TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
+  TTL_Core__Submarket__c, TTL_Core__Market__c,
+  Confirmed__c, Source__c, RecordTypeId
+FROM TTL_Core__Comp__c WHERE IsDeleted = false LIMIT 2000`.trim();
+
+const _SK={token:'sf_at',org:'sf_iu',verifier:'sf_cv'};
+const sfGetToken=()=>sessionStorage.getItem(_SK.token);
+const sfGetOrg  =()=>sessionStorage.getItem(_SK.org);
+const sfIsAuthed=()=>!!sfGetToken();
+function sfStoreTokens(a,i){sessionStorage.setItem(_SK.token,a);sessionStorage.setItem(_SK.org,i);}
+function sfClearTokens(){[_SK.token,_SK.org,_SK.verifier].forEach(k=>sessionStorage.removeItem(k));}
+
+function sfRandStr(len){
+  const c='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  const b=new Uint8Array(len);crypto.getRandomValues(b);
+  return Array.from(b,x=>c[x%c.length]).join('');
+}
+async function sfBuildPKCE(){
+  const v=sfRandStr(64);
+  const d=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(v));
+  const ch=btoa(String.fromCharCode(...new Uint8Array(d))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
+  return{verifier:v,challenge:ch};
+}
+async function sfLogin(){
+  const{verifier,challenge}=await sfBuildPKCE();
+  sessionStorage.setItem(_SK.verifier,verifier);
+  const p=new URLSearchParams({response_type:'code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
+  window.location.href=`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`;
+}
+async function sfHandleCallback(){
+  const p=new URLSearchParams(window.location.search);
+  const code=p.get('code');const verifier=sessionStorage.getItem(_SK.verifier);
+  if(!code||!verifier)return false;
+  const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code,code_verifier:verifier});
+  try{
+    const r=await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+    const d=await r.json();
+    if(d.access_token){sfStoreTokens(d.access_token,d.instance_url);window.history.replaceState({},document.title,window.location.origin+window.location.pathname);return true;}
+    return false;
+  }catch(e){return false;}
+}
+async function sfQuery(soql){
+  const t=sfGetToken(),o=sfGetOrg();if(!t||!o)throw new Error('Not connected');
+  const r=await fetch(`${o}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`,{headers:{Authorization:`Bearer ${t}`}});
+  if(!r.ok)throw new Error(`SF error ${r.status}`);
+  return(await r.json()).records||[];
+}
+function sfLogout(){
+  sfClearTokens();mapComps=[];mapFilteredComps=[];sfUpdateStatus();
+  document.getElementById('map-login-screen').style.display='flex';
+  document.getElementById('map-comp-list').innerHTML='';
+  document.getElementById('bov-launch-btn').style.display='none';
+}
+function sfUpdateStatus(){
+  const ok=sfIsAuthed();const c=ok?'#22c55e':'#ef4444';const l=ok?'SF Live':'SF Offline';
+  ['sf-status-dot','sf-status-dot-2'].forEach(id=>{const e=document.getElementById(id);if(e)e.style.background=c;});
+  ['sf-status-label','sf-status-label-2'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent=l;});
+  const b=document.getElementById('map-disconnect-btn');if(b)b.style.display=ok?'block':'none';
+}
+
+// ═══════════════════════════════════════════════════════
+// MAP STATE
+// ═══════════════════════════════════════════════════════
+let leafletMap=null,mapComps=[],mapFilteredComps=[],mapActiveFilter='all',mapMarkers=[],geocodeCache={};
+let advFilters={subtype:'all',confirmedOnly:false,yearFrom:'',yearTo:'',sfMin:'',sfMax:'',submarket:'all'};
+
+function sfCompType(r){return r.RecordTypeId===RT_LEASE?'lease':r.RecordTypeId===RT_SALE?'sale':'sale';}
+
+function sfToggleMap(){
+  const u=appGetUser();
+  if(!u){document.getElementById('app-login').style.display='flex';sessionStorage.setItem('lhc_pending_map','1');return;}
+  const ov=document.getElementById('sf-map-overlay');
+  if(ov.style.display!=='none'){ov.style.display='none';}else{openMapAfterLogin();}
+}
+function openMapAfterLogin(){
+  sessionStorage.removeItem('lhc_pending_map');
+  const ov=document.getElementById('sf-map-overlay');ov.style.display='flex';
+  renderUserBadge();sfUpdateStatus();
+  if(!leafletMap)initLeaflet();
+  if(!sfIsAuthed()){document.getElementById('map-login-screen').style.display='flex';}
+  else{document.getElementById('map-login-screen').style.display='none';if(mapComps.length===0)loadMapComps();}
+  logActivity('Map Opened');
+}
+function initLeaflet(){
+  const s=document.createElement('script');s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+  s.onload=()=>{leafletMap=L.map('leaflet-map',{zoomControl:true}).setView([27.8,-81.8],7);L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{attribution:'© OpenStreetMap © CARTO',maxZoom:19}).addTo(leafletMap);};
+  document.head.appendChild(s);
+}
+async function loadMapComps(){
+  document.getElementById('map-status-badge').textContent='Loading…';
+  document.getElementById('map-comp-list').innerHTML='<div style="padding:24px;text-align:center;font-size:12px;color:#64748B">Loading comps from Salesforce…</div>';
+  try{
+    mapComps=await sfQuery(SF_COMP_SOQL);
+    document.getElementById('map-status-badge').textContent=`${mapComps.length} comps`;
+    populateSubmarkets();mapFilter();
+    logActivity('Comps Loaded',`${mapComps.length} comps from Salesforce`);
+  }catch(err){
+    document.getElementById('map-comp-list').innerHTML=`<div style="padding:24px;text-align:center;font-size:12px;color:#ef4444">${err.message}<br><button onclick="loadMapComps()" style="margin-top:12px;background:#05014B;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:11px">Retry</button></div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// ADVANCED FILTERS
+// ═══════════════════════════════════════════════════════
+function toggleAdvFilters(){
+  const p=document.getElementById('adv-filters-panel'),b=document.getElementById('adv-filters-btn');
+  const open=p.style.display!=='none'&&p.style.display!=='';
+  p.style.display=open?'none':'block';
+  b.textContent=open?'Filters ▼':'Filters ▲';
+  b.style.background=open?'#fff':'#05014B';b.style.color=open?'#64748B':'#FFC000';b.style.borderColor=open?'#E2E8F0':'#05014B';
+}
+function populateSubmarkets(){
+  const subs=[...new Set(mapComps.map(r=>r.TTL_Core__Submarket__c).filter(Boolean))].sort();
+  const sel=document.getElementById('adv-submarket');if(!sel)return;
+  sel.innerHTML='<option value="all">All Submarkets</option>'+subs.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+function setSubtypeFilter(val){
+  advFilters.subtype=val;
+  document.querySelectorAll('.adv-subtype-btn').forEach(b=>b.classList.toggle('active',b.dataset.val===val));
+  mapFilter();
+}
+function applyAdvFilters(){
+  advFilters.confirmedOnly=document.getElementById('adv-confirmed').checked;
+  advFilters.yearFrom=document.getElementById('adv-year-from').value;
+  advFilters.yearTo=document.getElementById('adv-year-to').value;
+  advFilters.sfMin=document.getElementById('adv-sf-min').value;
+  advFilters.sfMax=document.getElementById('adv-sf-max').value;
+  advFilters.submarket=document.getElementById('adv-submarket').value;
+  mapFilter();
+}
+function clearAdvFilters(){
+  advFilters={subtype:'all',confirmedOnly:false,yearFrom:'',yearTo:'',sfMin:'',sfMax:'',submarket:'all'};
+  document.getElementById('adv-confirmed').checked=false;
+  ['adv-year-from','adv-year-to','adv-sf-min','adv-sf-max'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('adv-submarket').value='all';
+  document.querySelectorAll('.adv-subtype-btn').forEach(b=>b.classList.toggle('active',b.dataset.val==='all'));
+  mapFilter();
+}
+function mapSetFilter(type){
+  mapActiveFilter=type;
+  ['all','lease','sale'].forEach(t=>document.getElementById('mf-'+t)?.classList.toggle('map-filter-active',t===type));
+  mapFilter();
+}
+function mapFilter(){
+  const q=(document.getElementById('map-search')?.value||'').toLowerCase().trim();
+  mapFilteredComps=mapComps.filter(r=>{
+    if(mapActiveFilter!=='all'&&sfCompType(r)!==mapActiveFilter)return false;
+    if(q){const txt=[r.TTL_Core__Address__c,r.TTL_Core__City__c,r.TTL_Core__State__c,r.TTL_Core__Submarket__c,r.TTL_Core__Property_Subtype__c].join(' ').toLowerCase();if(!txt.includes(q))return false;}
+    if(advFilters.subtype!=='all'&&!(r.TTL_Core__Property_Subtype__c||'').toLowerCase().includes(advFilters.subtype.toLowerCase()))return false;
+    if(advFilters.confirmedOnly&&!r.Confirmed__c)return false;
+    if(advFilters.yearFrom||advFilters.yearTo){const d=r.TTL_Core__Close_Deal_Date__c;if(!d)return false;const y=parseInt(d.slice(0,4));if(advFilters.yearFrom&&y<parseInt(advFilters.yearFrom))return false;if(advFilters.yearTo&&y>parseInt(advFilters.yearTo))return false;}
+    const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
+    if(sf){if(advFilters.sfMin&&sf<parseFloat(advFilters.sfMin))return false;if(advFilters.sfMax&&sf>parseFloat(advFilters.sfMax))return false;}
+    if(advFilters.submarket!=='all'&&r.TTL_Core__Submarket__c!==advFilters.submarket)return false;
+    return true;
+  });
+  renderCompList();plotPins();
+  const ln=mapComps.filter(r=>sfCompType(r)==='lease').length,sn=mapComps.filter(r=>sfCompType(r)==='sale').length;
+  document.getElementById('map-count-bar').innerHTML=`<span style="color:#0A6EE8">● ${ln} Lease</span><span style="color:#E8400A">● ${sn} Sale</span><span>${mapFilteredComps.length} shown</span>`;
+  const bb=document.getElementById('bov-launch-btn');if(bb){bb.style.display=mapFilteredComps.length>0&&!activityOpen?'block':'none';bb.textContent=`📄 Create BOV from ${mapFilteredComps.length} Comp${mapFilteredComps.length===1?'':'s'}`;}
+}
+
+// ═══════════════════════════════════════════════════════
+// COMP LIST
+// ═══════════════════════════════════════════════════════
+function renderCompList(){
+  const list=document.getElementById('map-comp-list');
+  const u=appGetUser();const isPartner=!u||u.tier==='partner';
+  if(!mapFilteredComps.length){list.innerHTML='<div style="padding:24px;text-align:center;font-size:11px;color:#94A3B8">No comps match filters.</div>';return;}
+  const shown=mapFilteredComps.slice(0,200);
+  list.innerHTML=shown.map((r,i)=>{
+    const type=sfCompType(r),dot=type==='lease'?'#0A6EE8':'#E8400A';
+    const addr=r.TTL_Core__Address__c||r.Name||'—';
+    const city=[r.TTL_Core__City__c,r.TTL_Core__State__c].filter(Boolean).join(', ');
+    const sub=r.TTL_Core__Property_Subtype__c||'';
+    const date=r.TTL_Core__Close_Deal_Date__c?r.TTL_Core__Close_Deal_Date__c.slice(0,7):'';
+    const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
+    let val='';
+    if(type==='sale'&&r.TTL_Core__Price_total__c)val=`$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
+    else if(type==='sale'&&r.TTL_Core__Price_per_SF_Unit_Acre__c)val=`$${Number(r.TTL_Core__Price_per_SF_Unit_Acre__c).toFixed(0)}/SF`;
+    else if(type==='lease'&&r.TTL_Core__Rent_SF_Year__c)val=`$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
+    else if(type==='lease'&&r.Rent_Mo__c)val=`$${Number(r.Rent_Mo__c).toLocaleString()}/mo`;
+    const cap=(type==='sale'&&r.TTL_Core__Cap_Rate_YR_1__c)?` · ${Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(1)}% cap`:'';
+    const conf=r.Confirmed__c?`<span style="font-size:9px;font-weight:700;color:#16a34a;background:#dcfce7;padding:1px 5px">✓</span>`:'';
+    const src=isPartner&&r.Source__c?`<span style="font-size:9px;color:#94A3B8">${r.Source__c}</span>`:'';
+    return `<div class="map-comp-item" onclick="focusComp(${i})" id="mci-${i}">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:5px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#05014B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:1px">${city}${sub?' · '+sub:''}</div>
+          <div style="display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center">
+            ${val?`<span style="font-size:12px;font-weight:700;color:#05014B">${val}${cap}</span>`:''}
+            ${sf?`<span style="font-size:10px;color:#94A3B8">${Number(sf).toLocaleString()} SF</span>`:''}
+            ${date?`<span style="font-size:10px;color:#94A3B8">${date}</span>`:''}
+            ${conf}${src}
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+  if(mapFilteredComps.length>200)list.innerHTML+=`<div style="padding:10px;text-align:center;font-size:10px;color:#94A3B8">Showing 200 of ${mapFilteredComps.length}</div>`;
+}
+
+// ═══════════════════════════════════════════════════════
+// GEOCODING + PINS
+// ═══════════════════════════════════════════════════════
+async function geocodeAddress(addr,city,state){
+  const key=`${addr}|${city}|${state}`;if(geocodeCache[key])return geocodeCache[key];
+  try{
+    const r=await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addr+', '+city+', '+state+', USA')}&format=json&limit=1`,{headers:{'Accept-Language':'en','User-Agent':'LHCapitalIntelMap/1.0'}});
+    const d=await r.json();
+    if(d[0]){const c={lat:parseFloat(d[0].lat),lng:parseFloat(d[0].lon)};geocodeCache[key]=c;return c;}
+  }catch(e){}return null;
+}
+async function plotPins(){
+  if(!leafletMap)return;
+  mapMarkers.forEach(m=>m.remove());mapMarkers=[];
+  const toPlot=mapFilteredComps.slice(0,150);let plotted=0;
+  const u=appGetUser();const isPartner=!u||u.tier==='partner';
+  for(const r of toPlot){
+    const addr=r.TTL_Core__Address__c,city=r.TTL_Core__City__c,state=r.TTL_Core__State__c;
+    if(!addr||!city)continue;
+    const coords=await new Promise(res=>setTimeout(async()=>res(await geocodeAddress(addr,city,state)),plotted*280));
+    if(!coords)continue;
+    const type=sfCompType(r),color=type==='lease'?'#0A6EE8':'#E8400A';
+    const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
+    const conf=r.Confirmed__c;
+    let val='';
+    if(type==='sale'&&r.TTL_Core__Price_total__c)val=`$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
+    else if(type==='lease'&&r.TTL_Core__Rent_SF_Year__c)val=`$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
+    const cap=(type==='sale'&&r.TTL_Core__Cap_Rate_YR_1__c)?`<div style="font-size:11px;color:#64748B">${Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(1)}% cap rate</div>`:'';
+    const srcHtml=isPartner&&r.Source__c?`<div style="font-size:10px;color:#94A3B8">${r.Source__c}</div>`:'';
+    const icon=L.divIcon({className:'',html:`<div style="width:${conf?14:10}px;height:${conf?14:10}px;border-radius:50%;background:${color};border:${conf?'2px solid #fff':'1.5px solid rgba(255,255,255,0.7)'};box-shadow:0 1px 4px rgba(0,0,0,0.25)"></div>`,iconSize:[conf?14:10,conf?14:10],iconAnchor:[conf?7:5,conf?7:5]});
+    const marker=L.marker([coords.lat,coords.lng],{icon}).addTo(leafletMap).bindPopup(`<div style="font-size:12px;min-width:190px;line-height:1.5"><div style="font-weight:700;color:#05014B;margin-bottom:2px">${addr}</div><div style="color:#64748B;font-size:11px;margin-bottom:6px">${city}, ${state}${r.TTL_Core__Property_Subtype__c?' · '+r.TTL_Core__Property_Subtype__c:''}</div>${val?`<div style="font-weight:700;color:${color};font-size:14px">${val}</div>`:''} ${cap}${sf?`<div style="color:#64748B;font-size:11px">${Number(sf).toLocaleString()} SF</div>`:''} ${r.TTL_Core__Close_Deal_Date__c?`<div style="color:#94A3B8;font-size:10px">${r.TTL_Core__Close_Deal_Date__c.slice(0,7)}</div>`:''} ${conf?`<div style="font-size:10px;color:#16a34a;font-weight:600">✓ Confirmed</div>`:''} ${srcHtml}</div>`);
+    mapMarkers.push(marker);plotted++;
+  }
+  if(mapMarkers.length>0){const g=L.featureGroup(mapMarkers);leafletMap.fitBounds(g.getBounds().pad(0.1));}
+}
+function focusComp(i){
+  document.querySelectorAll('.map-comp-item').forEach(el=>el.classList.remove('map-comp-selected'));
+  document.getElementById('mci-'+i)?.classList.add('map-comp-selected');
+  if(mapMarkers[i]){mapMarkers[i].openPopup();leafletMap?.setView(mapMarkers[i].getLatLng(),14);}
+  const r=mapFilteredComps[i];if(r)logActivity('Comp Viewed',(r.TTL_Core__Address__c||'')+(r.TTL_Core__City__c?', '+r.TTL_Core__City__c:''));
+}
+
+// ═══════════════════════════════════════════════════════
+// BOV GENERATOR
+// ═══════════════════════════════════════════════════════
+function openBovModal(){
+  document.getElementById('bov-modal').classList.add('open');
+  const ln=mapFilteredComps.filter(r=>sfCompType(r)==='lease').length;
+  const sn=mapFilteredComps.filter(r=>sfCompType(r)==='sale').length;
+  document.getElementById('bov-comp-info').innerHTML=`<strong>Active comp set:</strong> ${mapFilteredComps.length} comps — <span style="color:#0A6EE8">${ln} lease</span> · <span style="color:#E8400A">${sn} sale</span>`;
+  logActivity('BOV Modal Opened',`${mapFilteredComps.length} comps`);
+}
+function closeBovModal(){document.getElementById('bov-modal').classList.remove('open');}
+function _median(arr){if(!arr.length)return null;const s=[...arr].sort((a,b)=>a-b);const m=Math.floor(s.length/2);return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function generateBOV(){
+  const addr=document.getElementById('bov-address').value.trim();
+  const city=document.getElementById('bov-city').value.trim();
+  const state=document.getElementById('bov-state').value.trim()||'FL';
+  const sf=document.getElementById('bov-sf').value.trim();
+  const yr=document.getElementById('bov-year').value.trim();
+  const subtype=document.getElementById('bov-subtype').value;
+  const type=document.querySelector('input[name="bov-type"]:checked').value;
+  const price=document.getElementById('bov-price').value.trim();
+  const rent=document.getElementById('bov-rent').value.trim();
+  const notes=document.getElementById('bov-notes').value.trim();
+  if(!addr){alert('Please enter a subject property address.');return;}
+  const lc=mapFilteredComps.filter(r=>sfCompType(r)==='lease');
+  const sc=mapFilteredComps.filter(r=>sfCompType(r)==='sale');
+  const medRent=_median(lc.map(r=>r.TTL_Core__Rent_SF_Year__c).filter(v=>v>0));
+  const medPSF =_median(sc.map(r=>r.TTL_Core__Price_per_SF_Unit_Acre__c).filter(v=>v>0));
+  const medCap =_median(sc.map(r=>r.TTL_Core__Cap_Rate_YR_1__c).filter(v=>v>0));
+  const today=new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'});
+  const saleRows=sc.slice(0,20).map(r=>{
+    const rsf=r.TTL_Core__Gross_SF__c||r.TTL_Core__Rentable_SF__c;
+    return `<tr><td>${r.TTL_Core__Address__c||'—'}</td><td>${r.TTL_Core__City__c||'—'}, ${r.TTL_Core__State__c||'FL'}</td><td>${r.TTL_Core__Property_Subtype__c||'—'}</td><td>${rsf?Number(rsf).toLocaleString()+' SF':'—'}</td><td>${r.TTL_Core__Price_total__c?'$'+Number(r.TTL_Core__Price_total__c).toLocaleString():'—'}</td><td>${r.TTL_Core__Price_per_SF_Unit_Acre__c?'$'+Number(r.TTL_Core__Price_per_SF_Unit_Acre__c).toFixed(0):'—'}</td><td>${r.TTL_Core__Cap_Rate_YR_1__c?Number(r.TTL_Core__Cap_Rate_YR_1__c).toFixed(1)+'%':'—'}</td><td>${r.TTL_Core__Close_Deal_Date__c?.slice(0,7)||'—'}</td></tr>`;
+  }).join('');
+  const leaseRows=lc.slice(0,20).map(r=>{
+    const rsf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
+    const rv=r.TTL_Core__Rent_SF_Year__c?'$'+Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)+'/SF/yr':r.Rent_Mo__c?'$'+Number(r.Rent_Mo__c).toLocaleString()+'/mo':'—';
+    return `<tr><td>${r.TTL_Core__Address__c||'—'}</td><td>${r.TTL_Core__City__c||'—'}, ${r.TTL_Core__State__c||'FL'}</td><td>${r.TTL_Core__Property_Subtype__c||'—'}</td><td>${rsf?Number(rsf).toLocaleString()+' SF':'—'}</td><td>${rv}</td><td>${r.TTL_Core__Lease_Structure__c||'—'}</td><td>${r.TTL_Core__Close_Deal_Date__c?.slice(0,7)||'—'}</td></tr>`;
+  }).join('');
+  const askVal=type==='sale'?(price||( medPSF&&sf?'$'+Math.round(medPSF*parseFloat(sf.replace(/,/g,''))).toLocaleString():null)):(rent||(medRent?'$'+medRent.toFixed(2)+'/SF/yr NNN':null));
+  const html=`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>BOV — ${addr}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Calibri,Arial,sans-serif;color:#2D3A4A}.hdr{background:#05014B;padding:32px 48px}.htop{display:flex;justify-content:space-between;align-items:flex-start}.lhm{font-size:20px;font-weight:700;color:#FFC000}.lhs{font-size:11px;color:rgba(255,255,255,0.5);margin-top:3px}.pb{background:#FFC000;color:#05014B;border:none;padding:10px 20px;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer}.bt{font-size:11px;font-weight:700;letter-spacing:0.2em;text-transform:uppercase;color:#FFC000;margin-top:24px}.bp{font-size:26px;font-weight:700;color:#fff;margin-top:6px}.bc{font-size:14px;color:rgba(255,255,255,0.6);margin-top:4px}.bd{font-size:11px;color:rgba(255,255,255,0.3);margin-top:20px}.body{padding:40px 48px}.sec{font-size:12px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#05014B;border-bottom:2px solid #FFC000;padding-bottom:8px;margin:32px 0 16px}.sec:first-child{margin-top:0}.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.cell{background:#F4F7FB;padding:14px 16px}.cl{font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64748B}.cv{font-size:15px;font-weight:700;color:#05014B;margin-top:4px}p{font-size:13px;line-height:1.75;margin-bottom:12px}table{width:100%;border-collapse:collapse;font-size:11.5px}th{background:#05014B;color:#fff;padding:9px 10px;text-align:left;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase}td{padding:8px 10px;border-bottom:1px solid #E2E8F0}tr:nth-child(even) td{background:#F9FAFB}.sr{display:flex;gap:24px;margin-bottom:20px;flex-wrap:wrap}.st{text-align:center;background:#F4F7FB;padding:14px 20px;min-width:110px}.sn{font-size:22px;font-weight:700;color:#05014B}.sl{font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#64748B;margin-top:3px}.vb{background:#05014B;padding:28px 32px;margin:32px 0}.vl{font-size:10px;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;color:#FFC000}.vn{font-size:34px;font-weight:700;color:#FFC000;margin:8px 0 4px}.vr{font-size:13px;color:rgba(255,255,255,0.6)}.disc{font-size:10.5px;color:#94A3B8;line-height:1.6;border-top:1px solid #E2E8F0;padding-top:14px;margin-top:24px}.ftr{background:#05014B;padding:22px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px}.ff{color:#FFC000;font-size:13px;font-weight:700}.fc{font-size:11px;color:rgba(255,255,255,0.45);text-align:right;line-height:1.8}@media print{body{-webkit-print-color-adjust:exact;print-color-adjust:exact}.pb{display:none}}</style></head><body>
+<div class="hdr"><div class="htop"><div><div class="lhm">L | H Capital Partners</div><div class="lhs">SIOR · CCIM · Industrial Real Estate Advisory · Florida</div></div><button class="pb" onclick="window.print()">Print / Save PDF</button></div><div class="bt">Broker Opinion of Value</div><div class="bp">${addr}</div><div class="bc">${city}, ${state}</div><div class="bd">Prepared ${today} · LH Capital Partners · Confidential</div></div>
+<div class="body">
+<div class="sec">Subject Property</div>
+<div class="g3"><div class="cell"><div class="cl">Address</div><div class="cv">${addr}</div></div><div class="cell"><div class="cl">City / State</div><div class="cv">${city}, ${state}</div></div><div class="cell"><div class="cl">Asset Type</div><div class="cv">${subtype}</div></div><div class="cell"><div class="cl">Building SF</div><div class="cv">${sf?Number(sf.replace(/,/g,'')).toLocaleString()+' SF':'—'}</div></div><div class="cell"><div class="cl">Year Built</div><div class="cv">${yr||'—'}</div></div><div class="cell"><div class="cl">Analysis</div><div class="cv">${type==='lease'?'Lease Rate Analysis':'Investment Sale'}</div></div></div>
+${notes?`<p>${notes}</p>`:''}
+${sc.length>0&&type!=='lease'?`<div class="sec">Sale Comparable Transactions (${sc.length})</div>${(medPSF||medCap)?`<div class="sr">${medPSF?`<div class="st"><div class="sn">$${medPSF.toFixed(0)}</div><div class="sl">Median $/SF</div></div>`:''} ${medCap?`<div class="st"><div class="sn">${medCap.toFixed(1)}%</div><div class="sl">Median Cap Rate</div></div>`:''}<div class="st"><div class="sn">${sc.length}</div><div class="sl">Comp Sales</div></div></div>`:''}<table><thead><tr><th>Address</th><th>City</th><th>Subtype</th><th>SF</th><th>Sale Price</th><th>$/SF</th><th>Cap Rate</th><th>Date</th></tr></thead><tbody>${saleRows}</tbody></table>`:''}
+${lc.length>0?`<div class="sec">Lease Comparable Transactions (${lc.length})</div>${medRent?`<div class="sr"><div class="st"><div class="sn">$${medRent.toFixed(2)}</div><div class="sl">Median NNN Rent/SF</div></div><div class="st"><div class="sn">${lc.length}</div><div class="sl">Lease Comps</div></div></div>`:''}<table><thead><tr><th>Address</th><th>City</th><th>Subtype</th><th>SF</th><th>NNN Rent/SF/yr</th><th>Structure</th><th>Date</th></tr></thead><tbody>${leaseRows}</tbody></table>`:''}
+${askVal?`<div class="vb"><div class="vl">${type==='lease'?'Market Rent Conclusion':'Valuation Conclusion'}</div><div class="vn">${askVal}</div><div class="vr">${type==='sale'&&medPSF?`Comp range: $${(medPSF*.9).toFixed(0)}–$${(medPSF*1.1).toFixed(0)}/SF · ${sc.length} verified transactions`:type==='lease'&&medRent?`Market range: $${(medRent*.9).toFixed(2)}–$${(medRent*1.1).toFixed(2)}/SF NNN · ${lc.length} verified transactions`:''}</div></div>`:''}
+<div class="disc">This Broker Opinion of Value is prepared by LH Capital Partners for informational purposes only and does not constitute a formal appraisal. All comparable transactions are sourced through broker-confirmed market intelligence. Market conditions may change; this analysis reflects data available as of the preparation date. Confidential — intended solely for the named recipient.</div>
+</div>
+<div class="ftr"><div><div class="ff">LH Capital Partners</div><div style="font-size:11px;color:rgba(255,255,255,0.4)">91 Broad Street Suite B · Winter Garden, FL 34787</div></div><div class="fc">Nick Hanson, SIOR · (407) 378-7307<br>Nick Ledvora, CCIM · (407) 347-3970<br>Ryan Hutkowski · (813) 725-3454</div></div>
+</body></html>`;
+  const w=window.open('','_blank');if(w){w.document.write(html);w.document.close();}
+  closeBovModal();logActivity('BOV Generated',addr+', '+city+' · '+mapFilteredComps.length+' comps');
+}
+
+// ═══════════════════════════════════════════════════════
+// CORPORATE SITE
+// ═══════════════════════════════════════════════════════
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
+  document.getElementById('page-'+id)?.classList.add('active');
+  document.querySelector(`.nav-link[data-page="${id}"]`)?.classList.add('active');
+  window.scrollTo(0,0);
+}
+function showTab(show,hide,btn){
+  document.getElementById(show)?.classList.add('active');
+  document.getElementById(hide)?.classList.remove('active');
+  btn.closest('.tab-bar-inner').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function openClosed(d){
+  document.getElementById('drawer-body').innerHTML=`<div style="padding:24px 20px"><img src="${d.img}" style="width:100%;height:200px;object-fit:cover;margin-bottom:20px" onerror="this.style.display=\'none\'"><div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--midgray)">${d.submarket}</div><div style="font-size:24px;font-weight:700;color:var(--navy);margin-top:6px">${d.name}</div><div style="font-size:13px;color:var(--midgray);margin-top:2px">${d.city}</div><div style="margin-top:24px;display:flex;flex-direction:column;gap:14px">${[['Sale Price',d.price],['Building Size',d.sf],['Asset Type',d.type],['Cap Rate',d.cap],['Closed',d.date]].map(([k,v])=>`<div><div style="font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray)">${k}</div><div style="font-size:16px;font-weight:700;color:var(--navy);margin-top:3px">${v}</div></div>`).join('')}</div><div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--ltgray);font-size:13px;color:var(--midgray);line-height:1.75">${d.notes}</div></div>`;
+  document.getElementById('drawer-overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+}
+function closeDrawer(){document.getElementById('drawer-overlay').classList.remove('open');document.getElementById('drawer').classList.remove('open');}
+
+// ═══════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════
+window.addEventListener('DOMContentLoaded',async()=>{
+  const authed=await sfHandleCallback();
+  sfUpdateStatus();
+  const u=appGetUser();
+  const b=document.getElementById('activity-count');if(b)b.textContent=activityLog.length;
+  if(authed){
+    if(u){
+      document.getElementById('sf-map-overlay').style.display='flex';
+      renderUserBadge();sfUpdateStatus();
+      if(!leafletMap)initLeaflet();
+      document.getElementById('map-login-screen').style.display='none';
+      setTimeout(()=>loadMapComps(),500);
+    } else {
+      document.getElementById('app-login').style.display='flex';
+      sessionStorage.setItem('lhc_pending_map','1');
+    }
+  }
+});
+</script>
 </body>
+</html>
