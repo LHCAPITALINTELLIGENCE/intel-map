@@ -1005,12 +1005,8 @@ async function sfBuildPKCE() {
 
 // ─── LOGIN ───────────────────────────────────────────────────────
 async function sfLogin() {
-  if (SF_CLIENT_ID === '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw') {
-    alert(
-      'SF_CLIENT_ID not set.\n\n' +
-      'In Salesforce: Setup → App Manager → New External Client App.\n' +
-      'Paste the Consumer Key into LHCapital_v10.html (SF_CLIENT_ID constant).'
-    );
+  if (SF_CLIENT_ID === 'YOUR_CONSUMER_KEY_HERE') {
+    alert('Setup required: paste your ECA Consumer Key into the SF_CLIENT_ID constant.');
     return;
   }
   const { verifier, challenge } = await sfBuildPKCE();
