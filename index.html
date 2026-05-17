@@ -998,7 +998,11 @@ const APP_USERS = {
   'tripp': {pw:'LHC2026!',name:'Tripp Duke',     tier:'partner',init:'TD'},
   'sam':   {pw:'LHC2026!',name:'Sam Ashe',       tier:'broker', init:'SA'}
 };
-function appGetUser(){try{return JSON.parse(sessionStorage.getItem('lhc_user'));}catch(e){return null;}}
+function appGetUser(){
+  // Auto-login as Nick for testing — remove this line to re-enable login gate
+  if(!sessionStorage.getItem('lhc_user'))sessionStorage.setItem('lhc_user',JSON.stringify({name:'Nick Hanson',tier:'partner',init:'NH',username:'nick'}));
+  try{return JSON.parse(sessionStorage.getItem('lhc_user'));}catch(e){return null;}
+}
 function appLogin(){
   const un=(document.getElementById('app-username').value||'').toLowerCase().trim();
   const pw=document.getElementById('app-password').value;
