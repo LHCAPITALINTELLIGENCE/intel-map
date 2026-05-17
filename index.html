@@ -1155,32 +1155,12 @@ async function sfBuildPKCE(){
 }
 async function sfLogin(){
   const statusEl=document.getElementById('sf-login-status');
-  if(statusEl)statusEl.textContent='Opening Salesforce login...';
+  if(statusEl)statusEl.textContent='Redirecting to Salesforce...';
   const{verifier,challenge}=await sfBuildPKCE();
   sessionStorage.setItem(_SK.verifier,verifier);
-  localStorage.removeItem('sf_oauth_code');
-  localStorage.removeItem('sf_oauth_ts');
+  sessionStorage.setItem('lhc_pending_sf_auth','1');
   const p=new URLSearchParams({response_type:'code',client_id:SF_CLIENT_ID,redirect_uri:SF_REDIRECT,code_challenge:challenge,code_challenge_method:'S256',scope:'api refresh_token'});
-  const authTab=window.open(`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`,'_blank');
-  if(!authTab){
-    if(statusEl)statusEl.textContent='Popup blocked. Allow popups then try again.';
-    alert('Allow popups for lhcapitalintelligence.github.io then click Connect again.');
-    return;
-  }
-  if(statusEl)statusEl.textContent='Complete Salesforce login in the new tab...';
-  const poll=setInterval(()=>{
-    const code=localStorage.getItem('sf_oauth_code');
-    const ts=parseInt(localStorage.getItem('sf_oauth_ts')||'0');
-    if(code&&(Date.now()-ts)<60000){
-      clearInterval(poll);
-      localStorage.removeItem('sf_oauth_code');
-      localStorage.removeItem('sf_oauth_ts');
-      try{authTab.close();}catch(e){}
-      exchangeCodeForToken(code);
-      return;
-    }
-    try{if(authTab.closed&&!sfIsAuthed()){clearInterval(poll);if(statusEl)statusEl.textContent='Tab closed. Click Connect to try again.';}}catch(e){clearInterval(poll);}
-  },500);
+  window.location.href=`${SF_LOGIN_HOST}/services/oauth2/authorize?${p}`;
 }
 async function exchangeCodeForToken(code){
   const statusEl=document.getElementById('sf-login-status');
@@ -2035,14 +2015,39 @@ function closeDrawer(){document.getElementById('drawer-overlay').classList.remov
 // ═══════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════
-window.addEventListener('DOMContentLoaded',()=>{
-  // OAuth popup callback: store code in localStorage so main window picks it up
+window.addEventListener('DOMContentLoaded',async()=>{
+  // SF OAuth callback — detect ?code= and exchange for token in-place
   const urlCode=new URLSearchParams(window.location.search).get('code');
   if(urlCode){
-    localStorage.setItem('sf_oauth_code',urlCode);
-    localStorage.setItem('sf_oauth_ts',Date.now().toString());
-    document.body.innerHTML='<div style="font-family:sans-serif;text-align:center;padding:60px;background:#05014B;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center"><div style="width:40px;height:40px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#05014B;margin:0 auto 20px">L|H</div><div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Connecting to Salesforce...</div><div style="font-size:13px;color:rgba(255,255,255,0.5)">This window will close automatically.</div></div>';
-    setTimeout(()=>window.close(),2000);
+    history.replaceState({},'',window.location.pathname);
+    sessionStorage.removeItem('lhc_pending_sf_auth');
+    const verifier=sessionStorage.getItem(_SK.verifier);
+    if(verifier){
+      // Show connecting overlay
+      const overlay=document.createElement('div');
+      overlay.id='sf-auth-overlay';
+      overlay.style.cssText='position:fixed;inset:0;background:#05014B;z-index:999999;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:system-ui';
+      overlay.innerHTML='<div style="width:44px;height:44px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;color:#05014B;margin-bottom:24px">L|H</div><div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">Authenticating with Salesforce…</div><div id="sf-auth-msg" style="font-size:13px;color:rgba(255,255,255,0.5)">Exchanging authorization code…</div>';
+      document.body.appendChild(overlay);
+      const msg=document.getElementById('sf-auth-msg');
+      try{
+        const body=new URLSearchParams({grant_type:'authorization_code',client_id:SF_CLIENT_ID,client_secret:'DAB938CA72FCB993B99B64EBDB7584E55C06AE919F4851604BE40291E48CD967',redirect_uri:SF_REDIRECT,code:urlCode,code_verifier:verifier});
+        const r=await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});
+        const d=await r.json();
+        if(d.access_token){
+          sfStoreTokens(d.access_token,d.instance_url);
+          if(msg)msg.textContent='Connected! Opening map…';
+          setTimeout(()=>{overlay.remove();sfUpdateStatus();openMapAfterLogin();},800);
+        }else{
+          if(msg)msg.innerHTML='Auth failed: '+(d.error_description||d.error||'unknown')+'<br><br><button onclick="location.reload()" style="background:#FFC000;color:#05014B;border:none;padding:10px 24px;font-weight:700;cursor:pointer;margin-top:8px">Try Again</button>';
+        }
+      }catch(e){
+        if(msg)msg.innerHTML='Network error: '+e.message+'<br><br><button onclick="location.reload()" style="background:#FFC000;color:#05014B;border:none;padding:10px 24px;font-weight:700;cursor:pointer;margin-top:8px">Try Again</button>';
+      }
+    }else{
+      // No verifier — just reload cleanly
+      window.location.reload();
+    }
     return;
   }
   sfUpdateStatus();
