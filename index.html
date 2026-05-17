@@ -716,7 +716,7 @@ textarea.form-input{resize:vertical;min-height:100px}
 
 <!-- SF Status Pill: click to open/close comp panel -->
 <div id="sf-status-pill" onclick="sfTogglePanel()" title="LH Capital · Salesforce Live Comps" style="
-  position:fixed;bottom:20px;left:20px;z-index:500;
+  position:fixed;bottom:20px;left:20px;z-index:100000;
   background:#05014B;border:1px solid rgba(255,255,255,0.12);
   display:flex;align-items:center;gap:7px;
   padding:8px 14px;cursor:pointer;
@@ -728,8 +728,8 @@ textarea.form-input{resize:vertical;min-height:100px}
 
 <!-- SF Comp Panel: slides up from bottom-left -->
 <div id="sf-comp-panel" style="
-  position:fixed;bottom:0;left:0;z-index:499;
-  width:400px;max-width:100vw;max-height:80vh;
+  position:fixed;bottom:0;left:0;z-index:99999;
+  width:400px;max-width:100vw;height:80vh;
   background:#05014B;
   border-top:2px solid #FFC000;
   border-right:1px solid rgba(255,255,255,0.1);
