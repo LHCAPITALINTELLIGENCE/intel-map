@@ -708,14 +708,16 @@ textarea.form-input{resize:vertical;min-height:100px}
 </footer>
 
 <!-- ═══════════════════════════════════════════════════════════════
-     SALESFORCE LIVE COMPS — BROKER TOOL (LHCapital v10)
-     SF Status Pill (bottom-left corner) + Slide-up Comp Panel
-     Not publicly visible — for internal broker use only
-     Requires: ECA Consumer Key in SF_CLIENT_ID constant below
+     LH CAPITAL INTELLIGENCE MAP (v12)
+     Full-screen map overlay with live Salesforce comp data
+     RecordType IDs: Lease=0128Y0000014yULQAY Sale=0128Y0000014yUMQAY
 ═════════════════════════════════════════════════════════════════ -->
 
-<!-- SF Status Pill: click to open/close comp panel -->
-<div id="sf-status-pill" onclick="sfTogglePanel()" title="LH Capital · Salesforce Live Comps" style="
+<!-- Leaflet CSS -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+
+<!-- SF Status Pill -->
+<div id="sf-status-pill" onclick="sfToggleMap()" title="LH Capital · Intelligence Map" style="
   position:fixed;bottom:20px;right:20px;z-index:100000;
   background:#05014B;border:1px solid rgba(255,255,255,0.12);
   display:flex;align-items:center;gap:7px;
@@ -726,255 +728,103 @@ textarea.form-input{resize:vertical;min-height:100px}
   <span id="sf-status-label" style="font-size:10px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.65)">SF Offline</span>
 </div>
 
-<!-- SF Comp Panel: slides up from bottom-left -->
-<div id="sf-comp-panel" style="
-  position:fixed;bottom:0;right:0;z-index:99999;
-  width:400px;max-width:100vw;height:80vh;
-  background:#05014B;
-  border-top:2px solid #FFC000;
-  border-right:1px solid rgba(255,255,255,0.1);
-  display:flex;flex-direction:column;
-  transform:translateY(100%);
-  transition:transform 0.3s cubic-bezier(.4,0,.2,1)">
-  <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0">
-    <div>
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4)">LH Capital Partners</div>
-      <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:2px">Live Comp Database</div>
+<!-- Full-screen Intelligence Map Overlay -->
+<div id="sf-map-overlay" style="
+  display:none;position:fixed;inset:0;z-index:99999;
+  background:#f4f7fb;flex-direction:column">
+
+  <!-- Map Header -->
+  <div style="background:#05014B;height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;z-index:1000">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:28px;height:28px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#05014B">L|H</div>
+      <div>
+        <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4)">LH Capital Partners</div>
+        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map</div>
+      </div>
+      <div id="map-status-badge" style="margin-left:8px;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)"></div>
     </div>
     <div style="display:flex;align-items:center;gap:10px">
-      <button id="sf-logout-btn" onclick="sfLogout()" style="display:none;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 8px">Disconnect</button>
-      <button onclick="sfTogglePanel()" style="background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:20px;line-height:1;padding:2px 8px">&times;</button>
+      <button id="map-disconnect-btn" onclick="sfLogout()" style="display:none;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Disconnect</button>
+      <button onclick="sfToggleMap()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:22px;line-height:1;padding:2px 8px">&times;</button>
     </div>
   </div>
-  <div id="sf-panel-content" style="flex:1;overflow-y:auto;min-height:120px"></div>
+
+  <!-- Map Body -->
+  <div style="display:flex;flex:1;overflow:hidden">
+
+    <!-- Left Sidebar -->
+    <div id="map-sidebar" style="width:340px;flex-shrink:0;background:#fff;border-right:1px solid #E2E8F0;display:flex;flex-direction:column;overflow:hidden">
+      
+      <!-- Search + Filters -->
+      <div style="padding:14px;border-bottom:1px solid #E2E8F0;flex-shrink:0">
+        <input id="map-search" type="text" placeholder="Search address, city, submarket…"
+          oninput="mapFilter()"
+          style="width:100%;border:1px solid #E2E8F0;padding:9px 12px;font-size:12px;font-family:inherit;outline:none;color:#2D3A4A;box-sizing:border-box"/>
+        <div style="display:flex;gap:4px;margin-top:8px">
+          <button class="map-filter-btn map-filter-active" id="mf-all" onclick="mapSetFilter('all')">All</button>
+          <button class="map-filter-btn" id="mf-lease" onclick="mapSetFilter('lease')">Lease</button>
+          <button class="map-filter-btn" id="mf-sale" onclick="mapSetFilter('sale')">Sale</button>
+        </div>
+        <div id="map-count-bar" style="margin-top:10px;display:flex;gap:8px;font-size:10px;color:#64748B"></div>
+      </div>
+
+      <!-- Comp List -->
+      <div id="map-comp-list" style="flex:1;overflow-y:auto"></div>
+    </div>
+
+    <!-- Map Container -->
+    <div id="leaflet-map" style="flex:1"></div>
+  </div>
+
+  <!-- Login Screen (shown when not authed) -->
+  <div id="map-login-screen" style="display:none;position:absolute;inset:0;background:rgba(5,1,75,0.92);z-index:10;align-items:center;justify-content:center;flex-direction:column;text-align:center">
+    <div style="font-size:40px;margin-bottom:20px;opacity:0.5">🗺️</div>
+    <div style="font-size:16px;font-weight:700;color:#FFC000;margin-bottom:8px">LH Capital Intelligence Map</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.5);line-height:1.65;margin-bottom:32px;max-width:300px">Connect to Salesforce to plot live comp data on the map.</div>
+    <button onclick="sfLogin()" style="background:#FFC000;color:#05014B;border:none;padding:14px 32px;font-size:12px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer">Connect to Salesforce</button>
+    <div style="font-size:10px;color:rgba(255,255,255,0.2);margin-top:14px">Uses your Salesforce login. Session expires when tab closes.</div>
+  </div>
 </div>
 
 <style>
-#sf-comp-panel.sf-open{transform:translateY(0)}
 #sf-status-pill:hover{opacity:0.82}
-#sf-search-input{font-family:inherit}
-#sf-search-input::placeholder{color:rgba(255,255,255,0.2)}
-#sf-search-input:focus{outline:none;border-color:rgba(255,192,0,0.45)}
-.sf-filter-btn{flex:1;border:none;padding:6px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;transition:background 0.15s,color 0.15s}
-.sf-filter-btn.sf-active{background:#FFC000;color:#05014B}
-.sf-filter-btn:not(.sf-active){background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.45)}
-.sf-comp-row{border-bottom:1px solid rgba(255,255,255,0.06);padding:13px 16px;cursor:default}
-.sf-comp-row:hover{background:rgba(255,255,255,0.025)}
+.map-filter-btn{flex:1;border:1px solid #E2E8F0;background:#fff;color:#64748B;padding:6px;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer;font-family:inherit;transition:all 0.15s}
+.map-filter-btn.map-filter-active{background:#05014B;color:#FFC000;border-color:#05014B}
+.map-comp-item{padding:12px 14px;border-bottom:1px solid #E2E8F0;cursor:pointer;transition:background 0.1s}
+.map-comp-item:hover{background:#F4F7FB}
+.map-comp-item.map-comp-selected{background:#EEF2FF;border-left:3px solid #05014B}
 </style>
 
 <script>
-// ─── DATA ───────────────────────────────────────────────────────
-const LH_ASSIGNMENTS = [
-  {id:'d0',name:'Ganesh North Industrial',addr:'3925 N John Young Pkwy',city:'Orlando, FL',sf:'239,000 SF',price:'$42,500,000',type:'Multi-Tenant Industrial',stage:'LOI/Offers',img:null,notes:'Large multi-tenant industrial campus on John Young Pkwy. Strong in-place tenancy with below-market rents offering upside. One of the largest single-parcel industrial listings in the Orlando MSA.',broker:'Nick Hanson · (407) 378-7307'},
-  {id:'d1',name:'Silver Star Commerce Center',addr:'3725 Silver Star Rd',city:'Orlando, FL',sf:'55,080 SF',price:'$8,175,000',type:'Multi-Tenant Industrial',stage:'Listing',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/ed4d7146d4487186f52c17340078109a',notes:'Multi-tenant industrial park in the established Silver Star Road corridor. Strong occupancy, infill location, and immediate access to SR-408 and SR-414.',broker:'Nick Hanson · (407) 378-7307'},
-  {id:'d2',name:'Park at Bay Plaza',addr:'901 Business Park Blvd',city:'Tampa, FL',sf:'130,000 SF',price:null,type:'Multi-Tenant Industrial',stage:'Active',img:null,notes:'Institutional-quality multi-tenant industrial park in the Tampa Bay market. High-clear warehouse bays with dock-high and grade-level loading.',broker:'Ryan Hutkowski · (813) 725-3454'},
-  {id:'d3',name:'Star Quality SLB',addr:'925 N John Young Pkwy',city:'Orlando, FL',sf:'48,000 SF',price:null,type:'Small Bay Warehouse',stage:'Active',img:null,notes:'Small bay industrial flex near OIA with strong tenant demand. Ideal for trade contractors, last-mile distribution, and light manufacturing users.',broker:'Nick Hanson · (407) 378-7307'},
-  {id:'d4',name:'Sarasota IOS Portfolio',addr:'Multiple Locations',city:'Sarasota, FL',sf:'12 Acres Total',price:null,type:'IOS',stage:'Listing',img:null,notes:'Multi-parcel IOS portfolio across the Sarasota County market. Zoning supports outdoor equipment storage, contractor yards, and vehicle staging. Offered as a package or individually.',broker:'Nick Ledvora · (407) 460-5522'},
-  {id:'d5',name:'Tampa IOS — Fenced Yard',addr:'6920 Asphalt Ave',city:'Tampa, FL',sf:'6.85 Acres',price:'$6,350,000',type:'IOS',stage:'Active',img:null,notes:'Fully fenced, gated industrial outdoor storage yard in established Tampa industrial corridor. Heavy truck access, paved surface, and IOS-permissible zoning. Lighted with 24/7 access.',broker:'Ryan Hutkowski · (813) 725-3454'},
-  {id:'d6',name:'Kissimmee Industrial',addr:'800 Armstrong Blvd',city:'Kissimmee, FL',sf:'16,000 SF / 2 Acres',price:null,type:'IOS',stage:'Prospect',img:null,notes:'Single-tenant industrial building with excess land for outdoor storage. Osceola County location with easy turnpike access. Currently occupied — ownership evaluating disposition timing.',broker:'Nick Hanson · (407) 378-7307'},
-  {id:'d7',name:'Clearwater IOS',addr:'13555 49th St N',city:'Clearwater, FL',sf:'54,406 SF / 2.98 Acres',price:null,type:'IOS',stage:'Prospect',img:null,notes:'Industrial asset with significant IOS component in the Pinellas County market. Strong submarket fundamentals with very limited IOS supply.',broker:'Sam Ashe · (443) 847-7574'},
-  {id:'d8',name:'Brooksville IOS',addr:'15220 Wiscon Rd',city:'Brooksville, FL',sf:'30,124 SF / 10.3 Acres',price:'$13,605,000',type:'IOS',stage:'Prospect',img:null,notes:'Large-format IOS asset in Hernando County with significant acreage and functional building. Heavy equipment and fleet staging demand driving interest from regional operators.',broker:'Nick Ledvora · (407) 460-5522'},
-  {id:'d9',name:'Adamo Drive Industrial',addr:'6608 E Adamo Dr',city:'Tampa, FL',sf:'42,241 SF',price:'$5,350,000',type:'Industrial',stage:'Active',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/73701aeb902548ca62df80ecd62aef30',notes:'Single-tenant industrial building on Adamo Drive in Tampa\'s established east industrial corridor. Excellent I-4 and I-75 access. Below-market in-place rent with near-term expiration.',broker:'Ryan Hutkowski · (813) 725-3454'},
-  {id:'d10',name:'Lakefront Industrial',addr:'Lakefront Corridor',city:'Orlando, FL',sf:'192,767 SF',price:null,type:'Industrial',stage:'Active',img:null,notes:'Large-format industrial facility in the Orlando market. Significant square footage with functional clear heights and dock loading. Ideal for regional distribution or manufacturing.',broker:'Nick Hanson · (407) 378-7307'},
-];
-
-const MARKET_LISTINGS = [
-  {id:'m0',name:'5115 Hartford St',city:'Tampa, FL',sf:'75,020 SF',acres:'8.0 Acres',price:'$14,000,000',psf:'$186/SF',type:'IOS',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/3a6c7a575d43db273d32c3f404af4827',notes:'Large-format IOS property in the Tampa market with significant acreage and functional building. Ideal for fleet staging, equipment storage, or contractor yard operations.'},
-  {id:'m1',name:'1600 Blanchard Blvd',city:'Columbus, GA',sf:'131,000 SF',acres:'15.25 Acres',price:'$6,785,000',psf:'$52/SF',type:'IOS',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/7a1a55fd277039a99df1a604fbdb6bfd',notes:'Industrial building with substantial outdoor storage component in the Columbus market. Good highway access and expanding industrial demand.'},
-  {id:'m2',name:'1727 Warren St',city:'Kansas City, MO',sf:'234,683 SF',acres:'19.78 Acres',price:'Price on Request',psf:null,type:'IOS',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/f37010c94c1b85cf3a5053257a9de4f8',notes:'Significant IOS asset in the Kansas City market with nearly 20 acres. Supply-constrained submarket with strong institutional investor interest.'},
-  {id:'m3',name:'Monroe Commerce Park',city:'Sanford, FL',sf:'119,032 SF',acres:null,price:'$20,410,000',psf:'$171/SF',type:'Small Bay Warehouse',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/f02b18d45705648b80466c852d7ab49c',notes:'Multi-tenant small bay industrial park in Sanford with strong occupancy. Orlando MSA location with access to I-4 and SR-417.'},
-  {id:'m4',name:'Dow Business Park',city:'Melbourne, FL',sf:'55,200 SF',acres:null,price:'$7,200,000',psf:'$130/SF',type:'Small Bay Warehouse',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/eec1e9cb8ed33c1854157b8121e74469',notes:'Small bay industrial park on the Space Coast. Melbourne market benefits from aerospace and defense demand. Strong tenant diversification.'},
-  {id:'m5',name:'Northwest Commerce Center',city:'Orlando, FL',sf:'55,080 SF',acres:null,price:'$8,175,000',psf:'$148/SF',type:'Industrial',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/ed4d7146d4487186f52c17340078109a',notes:'Multi-tenant industrial park in NW Orlando submarket. High-demand infill location near SR-414 and SR-408.'},
-  {id:'m6',name:'6608 E Adamo Dr',city:'Tampa, FL',sf:'42,241 SF',acres:null,price:'$5,350,000',psf:'$127/SF',type:'Industrial',img:'https://rethink-assets.s3.amazonaws.com/00D8Y000000fweDUAQ/73701aeb902548ca62df80ecd62aef30',notes:'Single-tenant industrial in Tampa\'s core Adamo corridor. Below-market rent with near-term lease expiration creates value-add opportunity.'},
-  {id:'m7',name:'1360 N Magnolia Ave',city:'El Cajon, CA',sf:'16,634 SF',acres:'1.53 Acres',price:'$7,691,000',psf:'$462/SF',type:'IOS',img:null,notes:'Infill IOS asset in the San Diego MSA. California IOS commands significant premiums due to near-zero vacancy and restrictive entitlement environment.'},
-  {id:'m8',name:'13860 Corporate Woods Trl',city:'Bridgeton, MO',sf:'192,180 SF',acres:'24.89 Acres',price:'Price on Request',psf:null,type:'IOS',img:null,notes:'Large IOS site in the St. Louis metro with significant acreage. Good interstate access and growing tenant demand from logistics and equipment rental operators.'},
-  {id:'m9',name:'6920 Asphalt Ave',city:'Tampa, FL',sf:'24,505 SF',acres:'6.85 Acres',price:'$6,350,000',psf:'$259/SF',type:'IOS',img:null,notes:'Fenced, gated IOS yard in the Tampa industrial corridor. Lighted with 24/7 access. Strong demand from fleet and contractor yard users.'},
-  {id:'m10',name:'1935 E Deer Valley Rd',city:'Phoenix, AZ',sf:'9,047 SF',acres:'2.47 Acres',price:'Price on Request',psf:null,type:'IOS',img:null,notes:'IOS asset in the Phoenix North submarket. Arizona IOS fundamentals remain strong driven by logistics expansion and population growth.'},
-];
-
-// ─── DRAWER ─────────────────────────────────────────────────────
-function openDrawer(data){
-  const d = document.getElementById('drawer');
-  const body = document.getElementById('drawer-body');
-
-  const stats = data.stats || [];
-  const statsHtml = stats.map(([k,v])=>v?`
-    <div>
-      <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray);margin-bottom:4px">${k}</div>
-      <div style="font-size:14px;font-weight:600;color:var(--dgray)">${v}</div>
-    </div>`:''
-  ).join('');
-
-  body.innerHTML = `
-    ${data.img ? `<div style="height:260px;background:url('${data.img}') center/cover no-repeat;position:relative">
-      ${data.badge?`<div style="position:absolute;top:14px;left:14px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;padding:5px 12px">${data.badge}</div>`:''}
-    </div>` : `<div style="height:120px;background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 100%);display:flex;align-items:center;padding:32px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.16em;text-transform:uppercase;color:rgba(255,255,255,0.5)">${data.type||'Industrial'}</div>
-    </div>`}
-    <div style="padding:32px">
-      <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--midgray);margin-bottom:6px">${data.submarket||data.city||''}</div>
-      <div style="font-size:24px;font-weight:700;color:var(--navy);line-height:1.15;letter-spacing:-0.02em">${data.name}</div>
-      ${data.addr?`<div style="font-size:13px;color:var(--midgray);margin-top:4px">${data.addr}${data.city?', '+data.city:''}</div>`:''}
-      ${data.price?`<div style="font-size:26px;font-weight:700;color:var(--navy);margin-top:20px;letter-spacing:-0.02em">${data.price}</div>`:''}
-      <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px 24px;padding-top:24px;border-top:1px solid var(--ltgray)">
-        ${statsHtml}
-      </div>
-      ${data.notes?`<div style="margin-top:24px;padding-top:24px;border-top:1px solid var(--ltgray);font-size:14px;color:var(--midgray);line-height:1.7">${data.notes}</div>`:''}
-      ${data.broker?`<div style="margin-top:28px;padding:20px;background:var(--offwhite)">
-        <div style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--midgray);margin-bottom:8px">Listing Broker</div>
-        <div style="font-size:14px;font-weight:600;color:var(--navy)">${data.broker}</div>
-        <button onclick="closeDrawer();showPage('contact')" style="margin-top:14px;width:100%;background:var(--navy);color:var(--white);border:none;padding:12px;font-size:12px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;cursor:pointer">Request Information</button>
-      </div>`:''}
-    </div>`;
-
-  d.classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('open');
-  document.body.style.overflow='hidden';
-}
-
-function closeDrawer(){
-  document.getElementById('drawer').classList.remove('open');
-  document.getElementById('drawer-overlay').classList.remove('open');
-  document.body.style.overflow='';
-}
-
-function openDeal(i){
-  const d = LH_ASSIGNMENTS[i];
-  openDrawer({
-    name: d.name, addr: d.addr, city: d.city,
-    price: d.price, img: d.img, type: d.type,
-    badge: d.stage, broker: d.broker, notes: d.notes,
-    stats: [['Size',d.sf],['Property Type',d.type],['Stage',d.stage],['Market',d.city]]
-  });
-}
-
-function openMarket(i){
-  const d = MARKET_LISTINGS[i];
-  openDrawer({
-    name: d.name, city: d.city,
-    price: d.price, img: d.img, type: d.type,
-    badge: 'For Sale', notes: d.notes,
-    stats: [['Size',d.sf],['Acreage',d.acres||'—'],['Price PSF',d.psf||'On Request'],['Type',d.type],['Market',d.city]]
-  });
-}
-
-function openClosed(data){
-  openDrawer({
-    name: data.name, addr: data.addr, city: data.city,
-    price: data.price, img: data.img, type: data.type,
-    badge: 'Sold', submarket: data.submarket, notes: data.notes,
-    broker: 'LH Capital Partners · (407) 460-5522',
-    stats: [['Sale Price',data.price],['Size',data.sf],['Asset Type',data.type],['Cap Rate',data.cap],['Closed',data.date]]
-  });
-}
-
-// ─── RENDER FUNCTIONS ────────────────────────────────────────────
-function stageBadge(stage){
-  const cls = stage==='LOI/Offers'?'deal-badge':stage==='Listing'?'deal-badge listing':stage==='Active'?'deal-badge active':'deal-badge prospect';
-  return `<div class="${cls}">${stage}</div>`;
-}
-
-function renderDeals(){
-  const c=document.getElementById('deals-container');
-  c.innerHTML=LH_ASSIGNMENTS.map((d,i)=>`
-    <div class="deal-card clickable" onclick="openDeal(${i})">
-      ${d.img?`<div style="height:140px;background:url('${d.img}') center/cover no-repeat"></div>`:''}
-      <div class="deal-body">
-        ${stageBadge(d.stage)}
-        <div class="deal-name">${d.name}</div>
-        <div class="deal-addr">${d.addr} · ${d.city}</div>
-        <div class="deal-stats">
-          <div><div class="deal-stat-label">Size</div><div class="deal-stat-val">${d.sf}</div></div>
-          <div><div class="deal-stat-label">Type</div><div class="deal-stat-val">${d.type}</div></div>
-          ${d.price?`<div><div class="deal-stat-label">Asking Price</div><div class="deal-stat-val">${d.price}</div></div>`:''}
-        </div>
-        <div class="card-cta">View Details →</div>
-      </div>
-    </div>`).join('');
-}
-
-function renderMarket(){
-  const c=document.getElementById('market-container');
-  c.innerHTML=MARKET_LISTINGS.map((d,i)=>`
-    <div class="market-card clickable" onclick="openMarket(${i})">
-      ${d.img?`<div class="market-img" style="background-image:url('${d.img}');height:160px;background-size:cover;background-position:center"></div>`:`<div class="market-img-placeholder">${d.type}</div>`}
-      <div class="market-body">
-        <div class="market-name">${d.name}</div>
-        <div class="market-loc">${d.city}${d.acres?' · '+d.acres:''}</div>
-        ${d.price&&d.price!=='Price on Request'?`<div class="market-price">${d.price}</div><div class="market-meta">${d.sf} · ${d.type}</div>`:`<div class="market-price" style="color:var(--midgray);font-size:14px">Price on Request</div><div class="market-meta">${d.sf} · ${d.type}</div>`}
-        <div class="card-cta">View Details →</div>
-      </div>
-    </div>`).join('');
-}
-
-// ─── NAVIGATION ─────────────────────────────────────────────────
-function showPage(id){
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  document.querySelectorAll('.nav-link').forEach(l=>l.classList.remove('active'));
-  const pg=document.getElementById('page-'+id);
-  if(pg){pg.classList.add('active');window.scrollTo(0,0);}
-  const lnk=document.querySelector(`[data-page="${id}"]`);
-  if(lnk) lnk.classList.add('active');
-  if(id==='listings'){renderDeals();renderMarket();}
-}
-
-function showTab(show,hide,btn){
-  document.getElementById(show).classList.add('active');
-  document.getElementById(hide).classList.remove('active');
-  btn.closest('.tab-bar-inner').querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  btn.classList.add('active');
-}
-
-// ─── FORMS ──────────────────────────────────────────────────────
-function submitIntelForm(){document.getElementById('intel-success').style.display='block';}
-function submitAcqForm(){document.getElementById('acq-success').style.display='block';}
-function submitContactForm(){document.getElementById('contact-success').style.display='block';}
-
-// ─── INIT ────────────────────────────────────────────────────────
-renderDeals();
-renderMarket();
-
-
 // ═══════════════════════════════════════════════════════════════
-// SALESFORCE OAUTH PKCE — LIVE COMP INTEGRATION (v10)
-// Auth method: Option B standalone with PKCE (no client secret)
-// Org: lhcapitalpartners-nickhanson-crm.my.salesforce.com
-// Object: TTL_Core__Comp__c
+// SALESFORCE OAUTH PKCE — INTELLIGENCE MAP (v12)
 // ═══════════════════════════════════════════════════════════════
 
-// ─── CONFIG — SET THESE BEFORE DEPLOYING ─────────────────────────
-// [STEP 1] In Salesforce: Setup → App Manager → New External Client App
-//          Name: "LH Intel Map" | Enable OAuth | Require PKCE ✓
-//          Callback URL: this page's URL (see SF_REDIRECT below)
-//          Scopes: api, refresh_token
-//          Copy the Consumer Key from the Settings tab.
-// [STEP 2] Paste Consumer Key here:
 const SF_CLIENT_ID  = '3MVG9sn24bYFReCWW3fnOoDQtUKnCglz02kuNm90Kk2uzKfhKiak6zOEpkj2qZwyompOT3HRGK7Y3pvQBZMdw';
-
 const SF_ORG_DOMAIN = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
-const SF_LOGIN_HOST  = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
-const SF_API_VER     = 'v60.0';
+const SF_LOGIN_HOST = 'https://lhcapitalpartners-nickhanson-crm.my.salesforce.com';
+const SF_API_VER    = 'v60.0';
+const SF_REDIRECT   = window.location.origin + window.location.pathname;
 
-// [STEP 3] When hosted on GitHub Pages, this auto-resolves correctly.
-// For local file:// testing it also works. No manual edit needed.
-const SF_REDIRECT    = window.location.origin + window.location.pathname;
+// RecordType IDs (confirmed from SF)
+const RT_LEASE = '0128Y0000014yULQAY';
+const RT_SALE  = '0128Y0000014yUMQAY';
 
-const SF_COMP_SOQL = `
-SELECT Id, Name,
+const SF_COMP_SOQL = `SELECT Id, Name,
   TTL_Core__Address__c, TTL_Core__City__c, TTL_Core__State__c,
-  TTL_Core__Rent_SF_Year__c, TTL_Core__Price_total__c,
+  TTL_Core__Rent_SF_Year__c, Rent_Mo__c,
+  TTL_Core__Price_total__c, TTL_Core__Price_per_SF_Unit_Acre__c,
   TTL_Core__Rentable_SF__c, TTL_Core__Gross_SF__c,
   TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
   TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
   TTL_Core__Submarket__c, TTL_Core__Market__c,
-  RecordType.Name
+  RecordTypeId
 FROM TTL_Core__Comp__c
 WHERE IsDeleted = false
-LIMIT 500`.trim();
+LIMIT 2000`.trim();
 
-// ─── TOKEN STORAGE (sessionStorage only — clears when tab closes) ─
-// No persistent storage. Every session requires SF login once.
-const _SK = { token: 'sf_at', org: 'sf_iu', verifier: 'sf_cv' };
+// ─── TOKEN STORAGE ───────────────────────────────────────────────
+const _SK = { token:'sf_at', org:'sf_iu', verifier:'sf_cv' };
 const sfGetToken  = () => sessionStorage.getItem(_SK.token);
 const sfGetOrg    = () => sessionStorage.getItem(_SK.org);
 const sfIsAuthed  = () => !!sfGetToken();
@@ -994,294 +844,315 @@ function sfRandStr(len) {
   return Array.from(bytes, b => chars[b % chars.length]).join('');
 }
 async function sfBuildPKCE() {
-  const verifier  = sfRandStr(64);
-  const digest    = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
+  const verifier = sfRandStr(64);
+  const digest   = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(verifier));
   const challenge = btoa(String.fromCharCode(...new Uint8Array(digest)))
     .replace(/\+/g,'-').replace(/\//g,'_').replace(/=/g,'');
   return { verifier, challenge };
 }
 
-// ─── LOGIN ───────────────────────────────────────────────────────
 async function sfLogin() {
-  if (SF_CLIENT_ID === 'YOUR_CONSUMER_KEY_HERE') {
-    alert('Setup required: paste your ECA Consumer Key into the SF_CLIENT_ID constant.');
-    return;
-  }
   const { verifier, challenge } = await sfBuildPKCE();
   sessionStorage.setItem(_SK.verifier, verifier);
   const params = new URLSearchParams({
-    response_type:         'code',
-    client_id:             SF_CLIENT_ID,
-    redirect_uri:          SF_REDIRECT,
-    code_challenge:        challenge,
-    code_challenge_method: 'S256',
-    scope:                 'api refresh_token'
+    response_type:'code', client_id:SF_CLIENT_ID, redirect_uri:SF_REDIRECT,
+    code_challenge:challenge, code_challenge_method:'S256', scope:'api refresh_token'
   });
   window.location.href = `${SF_LOGIN_HOST}/services/oauth2/authorize?${params}`;
 }
 
-// ─── OAUTH CALLBACK (runs on every page load) ────────────────────
 async function sfHandleCallback() {
   const params   = new URLSearchParams(window.location.search);
   const code     = params.get('code');
   const verifier = sessionStorage.getItem(_SK.verifier);
   if (!code || !verifier) return false;
-
   const body = new URLSearchParams({
-    grant_type:    'authorization_code',
-    client_id:     SF_CLIENT_ID,
-    redirect_uri:  SF_REDIRECT,
-    code,
-    code_verifier: verifier
+    grant_type:'authorization_code', client_id:SF_CLIENT_ID,
+    redirect_uri:SF_REDIRECT, code, code_verifier:verifier
   });
-
   try {
     const res  = await fetch(`${SF_LOGIN_HOST}/services/oauth2/token`, {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body
     });
     const data = await res.json();
     if (data.access_token) {
       sfStoreTokens(data.access_token, data.instance_url);
-      // Remove ?code= from address bar without reloading
-      window.history.replaceState({}, document.title,
-        window.location.origin + window.location.pathname);
+      window.history.replaceState({}, document.title, window.location.origin + window.location.pathname);
       return true;
     }
-    console.warn('[SF] Token exchange failed:', data);
     return false;
-  } catch (err) {
-    console.error('[SF] Callback error:', err);
-    return false;
-  }
+  } catch(err) { return false; }
 }
 
-// ─── QUERY ───────────────────────────────────────────────────────
 async function sfQuery(soql) {
-  const token  = sfGetToken();
-  const orgUrl = sfGetOrg();
-  if (!token || !orgUrl) throw new Error('Not connected to Salesforce');
-
-  const url = `${orgUrl}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`;
-  const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-
-  if (res.status === 401) {
-    sfClearTokens();
-    sfUpdatePill();
-    throw new Error('Session expired — reconnect below');
-  }
-  if (!res.ok) throw new Error(`Salesforce error ${res.status}`);
+  const token = sfGetToken(), orgUrl = sfGetOrg();
+  if (!token || !orgUrl) throw new Error('Not connected');
+  const res = await fetch(`${orgUrl}/services/data/${SF_API_VER}/query?q=${encodeURIComponent(soql)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  if (!res.ok) throw new Error(`SF error ${res.status}`);
   const data = await res.json();
   return data.records || [];
 }
 
-// ─── LOGOUT ──────────────────────────────────────────────────────
 function sfLogout() {
   sfClearTokens();
-  sfComps = [];
+  mapComps = [];
+  mapFilteredComps = [];
   sfUpdatePill();
-  sfShowLoginScreen();
+  document.getElementById('map-login-screen').style.display = 'flex';
 }
 
-// ─── PILL STATUS ─────────────────────────────────────────────────
 function sfUpdatePill() {
-  const dot    = document.getElementById('sf-status-dot');
-  const label  = document.getElementById('sf-status-label');
-  const logBtn = document.getElementById('sf-logout-btn');
+  const dot = document.getElementById('sf-status-dot');
+  const lbl = document.getElementById('sf-status-label');
+  const btn = document.getElementById('map-disconnect-btn');
   if (!dot) return;
   if (sfIsAuthed()) {
-    dot.style.background  = '#22c55e';
-    label.textContent     = 'SF Live';
-    if (logBtn) logBtn.style.display = 'block';
+    dot.style.background = '#22c55e';
+    lbl.textContent = 'SF Live';
+    if (btn) btn.style.display = 'block';
   } else {
-    dot.style.background  = '#ef4444';
-    label.textContent     = 'SF Offline';
-    if (logBtn) logBtn.style.display = 'none';
+    dot.style.background = '#ef4444';
+    lbl.textContent = 'SF Offline';
+    if (btn) btn.style.display = 'none';
   }
 }
 
-// ─── PANEL OPEN / CLOSE ──────────────────────────────────────────
-function sfTogglePanel() {
-  const panel = document.getElementById('sf-comp-panel');
-  if (!panel) return;
-  const t = panel.style.transform;
-  const isOpen = (t === 'translateY(0)' || t === 'translateY(0px)');
+// ─── MAP STATE ───────────────────────────────────────────────────
+let leafletMap      = null;
+let mapComps        = [];
+let mapFilteredComps = [];
+let mapActiveFilter = 'all';
+let mapMarkers      = [];
+let geocodeCache    = {};
+let geocodeQueue    = [];
+
+function sfCompType(r) {
+  if (r.RecordTypeId === RT_LEASE) return 'lease';
+  if (r.RecordTypeId === RT_SALE)  return 'sale';
+  return 'sale'; // portfolio comps → sale
+}
+
+// ─── MAP TOGGLE ──────────────────────────────────────────────────
+function sfToggleMap() {
+  const overlay = document.getElementById('sf-map-overlay');
+  const isOpen  = overlay.style.display !== 'none';
   if (isOpen) {
-    panel.style.transform = 'translateY(100%)';
+    overlay.style.display = 'none';
   } else {
-    panel.style.transform = 'translateY(0)';
+    overlay.style.display = 'flex';
+    if (!leafletMap) initLeaflet();
     if (!sfIsAuthed()) {
-      sfShowLoginScreen();
-    } else if (sfComps.length === 0) {
-      sfLoadComps();
+      document.getElementById('map-login-screen').style.display = 'flex';
+    } else {
+      document.getElementById('map-login-screen').style.display = 'none';
+      if (mapComps.length === 0) loadMapComps();
     }
   }
 }
 
-function sfShowLoginScreen() {
-  const c = document.getElementById('sf-panel-content');
-  if (!c) return;
-  c.innerHTML = `
-    <div style="padding:40px 24px;text-align:center">
-      <div style="font-size:32px;margin-bottom:16px;opacity:0.4">🏢</div>
-      <div style="font-size:13px;color:rgba(255,255,255,0.45);line-height:1.65;margin-bottom:28px;max-width:260px;margin-left:auto;margin-right:auto">
-        Connect to Salesforce to search the live<br>LH Capital comp database.
-      </div>
-      <button onclick="sfLogin()" style="
-        width:100%;max-width:240px;background:#FFC000;color:#05014B;border:none;
-        padding:14px;font-size:11px;font-weight:700;letter-spacing:0.1em;
-        text-transform:uppercase;cursor:pointer;display:block;margin:0 auto">
-        Connect to Salesforce
-      </button>
-      <div style="font-size:10px;color:rgba(255,255,255,0.18);margin-top:14px;line-height:1.6">
-        Uses your Salesforce login. No separate password.<br>
-        Session expires when this tab closes.
-      </div>
-    </div>`;
+// ─── LEAFLET INIT ────────────────────────────────────────────────
+function initLeaflet() {
+  // Load Leaflet JS dynamically
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+  script.onload = () => {
+    leafletMap = L.map('leaflet-map', { zoomControl: true }).setView([27.8, -81.8], 7);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      attribution: '© OpenStreetMap contributors © CARTO',
+      maxZoom: 19
+    }).addTo(leafletMap);
+  };
+  document.head.appendChild(script);
 }
 
-// ─── LOAD COMPS FROM SF ──────────────────────────────────────────
-let sfComps        = [];
-let sfActiveFilter = 'all';
-
-async function sfLoadComps() {
-  const c = document.getElementById('sf-panel-content');
-  if (!c) return;
-  c.innerHTML = `
-    <div style="padding:40px 20px;text-align:center;font-size:12px;color:rgba(255,255,255,0.35);letter-spacing:0.05em">
-      Loading comps from Salesforce…
-    </div>`;
+// ─── LOAD COMPS ──────────────────────────────────────────────────
+async function loadMapComps() {
+  document.getElementById('map-status-badge').textContent = 'Loading…';
+  document.getElementById('map-comp-list').innerHTML =
+    '<div style="padding:24px;text-align:center;font-size:12px;color:#64748B">Loading comps from Salesforce…</div>';
   try {
-    sfComps        = await sfQuery(SF_COMP_SOQL);
-    sfActiveFilter = 'all';
-    sfRenderSearch();
-  } catch (err) {
-    c.innerHTML = `
-      <div style="padding:32px 20px;text-align:center">
-        <div style="font-size:12px;color:#ef4444;margin-bottom:16px">${err.message}</div>
-        ${sfIsAuthed()
-          ? `<button onclick="sfLoadComps()" style="background:rgba(255,255,255,0.08);border:none;color:rgba(255,255,255,0.55);padding:8px 16px;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em">Retry</button>`
-          : `<button onclick="sfLogin()" style="background:#FFC000;color:#05014B;border:none;padding:10px 20px;font-size:10px;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:0.08em">Reconnect</button>`
-        }
-      </div>`;
+    mapComps = await sfQuery(SF_COMP_SOQL);
+    document.getElementById('map-status-badge').textContent =
+      `${mapComps.length} comps loaded`;
+    mapFilter();
+  } catch(err) {
+    document.getElementById('map-comp-list').innerHTML =
+      `<div style="padding:24px;text-align:center;font-size:12px;color:#ef4444">${err.message}<br><button onclick="loadMapComps()" style="margin-top:12px;background:#05014B;color:#fff;border:none;padding:8px 16px;cursor:pointer;font-size:11px">Retry</button></div>`;
   }
 }
 
-// ─── SEARCH / FILTER UI ──────────────────────────────────────────
-function sfCompType(r) {
-  return (r.RecordType?.Name||'').toLowerCase().includes('sale') ? 'sale' : 'lease';
-}
-
-function sfRenderSearch() {
-  const c = document.getElementById('sf-panel-content');
-  if (!c) return;
-  const leaseN = sfComps.filter(r => sfCompType(r) === 'lease').length;
-  const saleN  = sfComps.filter(r => sfCompType(r) === 'sale').length;
-  c.innerHTML = `
-    <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.07)">
-      <div style="display:flex;gap:5px;margin-bottom:10px">
-        <span style="font-size:10px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);padding:3px 9px">
-          <span style="color:#0A6EE8">●</span> ${leaseN} Lease</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);padding:3px 9px">
-          <span style="color:#E8400A">●</span> ${saleN} Sale</span>
-        <span style="font-size:10px;color:rgba(255,255,255,0.3);background:rgba(255,255,255,0.05);padding:3px 9px">
-          ${sfComps.length} Total</span>
-      </div>
-      <input id="sf-search-input" type="text"
-        placeholder="Address, city, submarket, type…"
-        oninput="sfApplyFilter()"
-        style="width:100%;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);
-          color:white;padding:9px 12px;font-size:12px;box-sizing:border-box">
-      <div style="display:flex;gap:4px;margin-top:8px">
-        <button class="sf-filter-btn sf-active" id="sf-f-all"   onclick="sfSetFilter('all')"  >All</button>
-        <button class="sf-filter-btn"           id="sf-f-lease" onclick="sfSetFilter('lease')">Lease</button>
-        <button class="sf-filter-btn"           id="sf-f-sale"  onclick="sfSetFilter('sale')" >Sale</button>
-      </div>
-    </div>
-    <div id="sf-comp-list" style="overflow-y:auto;max-height:calc(80vh - 160px)"></div>`;
-  sfApplyFilter();
-}
-
-function sfSetFilter(type) {
-  sfActiveFilter = type;
+// ─── FILTER ──────────────────────────────────────────────────────
+function mapSetFilter(type) {
+  mapActiveFilter = type;
   ['all','lease','sale'].forEach(t => {
-    const btn = document.getElementById('sf-f-'+t);
-    if (!btn) return;
-    btn.classList.toggle('sf-active', t === type);
+    document.getElementById('mf-'+t)?.classList.toggle('map-filter-active', t === type);
   });
-  sfApplyFilter();
+  mapFilter();
 }
 
-function sfApplyFilter() {
-  const list = document.getElementById('sf-comp-list');
-  if (!list) return;
-  const q = (document.getElementById('sf-search-input')?.value || '').toLowerCase().trim();
-
-  const filtered = sfComps.filter(r => {
-    const typeOk = sfActiveFilter === 'all' || sfCompType(r) === sfActiveFilter;
-    const text   = [
-      r.TTL_Core__Address__c, r.TTL_Core__City__c, r.TTL_Core__State__c,
-      r.TTL_Core__Submarket__c, r.TTL_Core__Market__c,
-      r.TTL_Core__Property_Subtype__c, r.TTL_Core__Property_Type__c
+function mapFilter() {
+  const q = (document.getElementById('map-search')?.value || '').toLowerCase().trim();
+  mapFilteredComps = mapComps.filter(r => {
+    const typeOk = mapActiveFilter === 'all' || sfCompType(r) === mapActiveFilter;
+    const text = [r.TTL_Core__Address__c, r.TTL_Core__City__c, r.TTL_Core__State__c,
+      r.TTL_Core__Submarket__c, r.TTL_Core__Market__c, r.TTL_Core__Property_Subtype__c
     ].join(' ').toLowerCase();
     return typeOk && (!q || text.includes(q));
   });
+  renderCompList();
+  plotPins();
 
-  if (!filtered.length) {
-    list.innerHTML = `<div style="padding:24px;text-align:center;font-size:11px;color:rgba(255,255,255,0.2)">No comps match your search.</div>`;
+  const leaseN = mapComps.filter(r => sfCompType(r) === 'lease').length;
+  const saleN  = mapComps.filter(r => sfCompType(r) === 'sale').length;
+  document.getElementById('map-count-bar').innerHTML = `
+    <span style="color:#0A6EE8">● ${leaseN} Lease</span>
+    <span style="color:#E8400A">● ${saleN} Sale</span>
+    <span>${mapFilteredComps.length} shown</span>`;
+}
+
+// ─── RENDER LIST ─────────────────────────────────────────────────
+function renderCompList() {
+  const list = document.getElementById('map-comp-list');
+  if (!mapFilteredComps.length) {
+    list.innerHTML = '<div style="padding:24px;text-align:center;font-size:11px;color:#94A3B8">No comps match your search.</div>';
     return;
   }
-
-  list.innerHTML = filtered.slice(0,150).map(r => {
-    const type    = sfCompType(r);
-    const dot     = type==='sale' ? '#E8400A' : '#0A6EE8';
-    const addr    = r.TTL_Core__Address__c || r.Name || '—';
-    const city    = [r.TTL_Core__City__c, r.TTL_Core__State__c].filter(Boolean).join(', ');
-    const subtype = r.TTL_Core__Property_Subtype__c || '';
-    const date    = r.TTL_Core__Close_Deal_Date__c ? r.TTL_Core__Close_Deal_Date__c.slice(0,7) : '';
-    const sf      = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
-    const sfFmt   = sf ? Number(sf).toLocaleString()+' SF' : '';
+  const shown = mapFilteredComps.slice(0, 200);
+  list.innerHTML = shown.map((r, i) => {
+    const type = sfCompType(r);
+    const dot  = type === 'lease' ? '#0A6EE8' : '#E8400A';
+    const addr = r.TTL_Core__Address__c || r.Name || '—';
+    const city = [r.TTL_Core__City__c, r.TTL_Core__State__c].filter(Boolean).join(', ');
+    const date = r.TTL_Core__Close_Deal_Date__c ? r.TTL_Core__Close_Deal_Date__c.slice(0,7) : '';
+    const sf   = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
     let val = '';
-    if (type==='sale' && r.TTL_Core__Price_total__c)
-      val = `<span style="color:#FFC000;font-size:12px;font-weight:700">$${Number(r.TTL_Core__Price_total__c).toLocaleString()}</span>`;
-    else if (type==='lease' && r.TTL_Core__Rent_SF_Year__c)
-      val = `<span style="color:#FFC000;font-size:12px;font-weight:700">$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr</span>`;
-    return `
-      <div class="sf-comp-row">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <div style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:5px;flex-shrink:0"></div>
-          <div style="flex:1;min-width:0">
-            <div style="font-size:12px;font-weight:600;color:rgba(255,255,255,0.88);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.38);margin-top:2px">${city}</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:7px">
-              ${val}
-              ${sfFmt ? `<span style="font-size:11px;color:rgba(255,255,255,0.32)">${sfFmt}</span>` : ''}
-              ${date  ? `<span style="font-size:10px;color:rgba(255,255,255,0.25)">${date}</span>` : ''}
-              ${subtype ? `<span style="font-size:10px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:0.05em">${subtype}</span>` : ''}
-            </div>
+    if (type === 'sale' && r.TTL_Core__Price_total__c)
+      val = `$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
+    else if (type === 'lease' && r.TTL_Core__Rent_SF_Year__c)
+      val = `$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
+    else if (type === 'lease' && r.Rent_Mo__c)
+      val = `$${Number(r.Rent_Mo__c).toLocaleString()}/mo`;
+    return `<div class="map-comp-item" onclick="focusComp(${i})" id="mci-${i}">
+      <div style="display:flex;align-items:flex-start;gap:8px">
+        <div style="width:7px;height:7px;border-radius:50%;background:${dot};margin-top:4px;flex-shrink:0"></div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:12px;font-weight:600;color:#05014B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${addr}</div>
+          <div style="font-size:11px;color:#64748B;margin-top:1px">${city}</div>
+          <div style="display:flex;gap:8px;margin-top:5px;flex-wrap:wrap;align-items:center">
+            ${val ? `<span style="font-size:12px;font-weight:700;color:#05014B">${val}</span>` : ''}
+            ${sf ? `<span style="font-size:10px;color:#94A3B8">${Number(sf).toLocaleString()} SF</span>` : ''}
+            ${date ? `<span style="font-size:10px;color:#94A3B8">${date}</span>` : ''}
           </div>
         </div>
-      </div>`;
+      </div>
+    </div>`;
   }).join('');
+  if (mapFilteredComps.length > 200)
+    list.innerHTML += `<div style="padding:10px;text-align:center;font-size:10px;color:#94A3B8">Showing 200 of ${mapFilteredComps.length} — narrow your search to see more.</div>`;
+}
 
-  if (filtered.length > 150) {
-    list.innerHTML += `<div style="padding:10px;text-align:center;font-size:10px;color:rgba(255,255,255,0.18)">Showing 150 of ${filtered.length} — narrow your search.</div>`;
+// ─── GEOCODING ───────────────────────────────────────────────────
+async function geocodeAddress(addr, city, state) {
+  const key = `${addr}, ${city}, ${state}`;
+  if (geocodeCache[key]) return geocodeCache[key];
+  const q = `${addr}, ${city}, ${state}, USA`;
+  try {
+    const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`, {
+      headers: {'Accept-Language':'en', 'User-Agent':'LHCapitalIntelMap/1.0'}
+    });
+    const data = await res.json();
+    if (data[0]) {
+      const coords = { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+      geocodeCache[key] = coords;
+      return coords;
+    }
+  } catch(e) {}
+  return null;
+}
+
+// ─── PLOT PINS ───────────────────────────────────────────────────
+async function plotPins() {
+  if (!leafletMap) return;
+  // Clear old markers
+  mapMarkers.forEach(m => m.remove());
+  mapMarkers = [];
+
+  // Only plot up to 150 comps (geocode on demand)
+  const toPlot = mapFilteredComps.slice(0, 150);
+  let plotted = 0;
+
+  for (const r of toPlot) {
+    const addr  = r.TTL_Core__Address__c;
+    const city  = r.TTL_Core__City__c;
+    const state = r.TTL_Core__State__c;
+    if (!addr || !city) continue;
+
+    // Rate limit geocoding — 1 per 300ms
+    const coords = await new Promise(resolve => {
+      setTimeout(async () => resolve(await geocodeAddress(addr, city, state)), plotted * 300);
+    });
+    if (!coords) continue;
+
+    const type   = sfCompType(r);
+    const color  = type === 'lease' ? '#0A6EE8' : '#E8400A';
+    const sf     = r.TTL_Core__Rentable_SF__c || r.TTL_Core__Gross_SF__c;
+    let val = '';
+    if (type === 'sale' && r.TTL_Core__Price_total__c)
+      val = `$${Number(r.TTL_Core__Price_total__c).toLocaleString()}`;
+    else if (type === 'lease' && r.TTL_Core__Rent_SF_Year__c)
+      val = `$${Number(r.TTL_Core__Rent_SF_Year__c).toFixed(2)}/SF/yr`;
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="width:12px;height:12px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,0.3)"></div>`,
+      iconSize: [12, 12], iconAnchor: [6, 6]
+    });
+
+    const marker = L.marker([coords.lat, coords.lng], { icon })
+      .addTo(leafletMap)
+      .bindPopup(`<div style="font-size:12px;min-width:180px">
+        <div style="font-weight:700;color:#05014B;margin-bottom:4px">${addr}</div>
+        <div style="color:#64748B;margin-bottom:6px">${city}, ${state}</div>
+        ${val ? `<div style="font-weight:700;color:${color};font-size:13px">${val}</div>` : ''}
+        ${sf ? `<div style="color:#64748B;font-size:11px">${Number(sf).toLocaleString()} SF</div>` : ''}
+      </div>`);
+    mapMarkers.push(marker);
+    plotted++;
+  }
+
+  // Fit bounds if we have markers
+  if (mapMarkers.length > 0) {
+    const group = L.featureGroup(mapMarkers);
+    leafletMap.fitBounds(group.getBounds().pad(0.1));
   }
 }
 
-// ─── INIT: check for OAuth callback on every page load ───────────
+// ─── FOCUS COMP ──────────────────────────────────────────────────
+function focusComp(i) {
+  document.querySelectorAll('.map-comp-item').forEach(el => el.classList.remove('map-comp-selected'));
+  document.getElementById('mci-'+i)?.classList.add('map-comp-selected');
+  if (mapMarkers[i]) {
+    mapMarkers[i].openPopup();
+    leafletMap?.setView(mapMarkers[i].getLatLng(), 14);
+  }
+}
+
+// ─── INIT ────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   const authed = await sfHandleCallback();
   sfUpdatePill();
   if (authed) {
-    // Returned from SF login — open panel and load comps automatically
-    const panel = document.getElementById('sf-comp-panel');
-    if (panel) panel.style.transform = 'translateY(0)';
-    sfLoadComps();
+    // Returned from SF login — open map
+    document.getElementById('sf-map-overlay').style.display = 'flex';
+    if (!leafletMap) initLeaflet();
+    document.getElementById('map-login-screen').style.display = 'none';
+    setTimeout(() => loadMapComps(), 500); // Give leaflet time to init
   }
 });
 </script>
+
 <!-- DRAWER OVERLAY -->
 <div id="drawer-overlay" onclick="closeDrawer()" style="display:none;position:fixed;inset:0;background:rgba(5,1,75,0.45);z-index:200;transition:opacity 0.3s"></div>
 <div id="drawer" style="display:none;position:fixed;top:0;right:0;width:460px;max-width:100vw;height:100vh;background:var(--white);z-index:201;overflow-y:auto;transform:translateX(100%);transition:transform 0.3s cubic-bezier(.4,0,.2,1)">
