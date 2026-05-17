@@ -738,7 +738,7 @@ textarea.form-input{resize:vertical;min-height:100px}
       <div style="width:28px;height:28px;background:#FFC000;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;color:#05014B">L|H</div>
       <div>
         <div style="font-size:11px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:rgba(255,255,255,0.4)">LH Capital Partners</div>
-        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:400">v13</span></div>
+        <div style="font-size:13px;font-weight:600;color:#FFC000;margin-top:1px">Intelligence Map <span style="font-size:9px;color:rgba(255,255,255,0.3);font-weight:400">v14</span></div>
       </div>
       <div id="map-status-badge" style="font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:rgba(255,255,255,0.3)"></div>
     </div>
@@ -746,6 +746,7 @@ textarea.form-input{resize:vertical;min-height:100px}
       <div id="map-user-badge" class="user-badge" style="display:none"></div>
       <button id="map-disconnect-btn" onclick="sfLogout()" style="display:none;background:none;border:1px solid rgba(255,255,255,0.15);color:rgba(255,255,255,0.4);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Disconnect SF</button>
       <button onclick="appLogout()" style="background:none;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);cursor:pointer;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">Sign Out</button>
+      <button id="intel-feed-toggle" onclick="toggleIntelFeed()" style="background:rgba(255,192,0,0.15);border:1px solid rgba(255,192,0,0.3);color:#FFC000;cursor:pointer;font-size:10px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;padding:4px 10px">⚡ Intel Feed</button>
       <button onclick="sfToggleMap()" style="background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;font-size:22px;line-height:1;padding:2px 8px">&times;</button>
     </div>
   </div>
@@ -829,6 +830,18 @@ textarea.form-input{resize:vertical;min-height:100px}
 
     <!-- Map -->
     <div id="leaflet-map" style="flex:1"></div>
+
+    <!-- Intel Feed Panel (right sidebar) -->
+    <div id="intel-feed-panel" style="width:0;flex-shrink:0;background:#05014B;overflow:hidden;transition:width 0.25s ease;display:flex;flex-direction:column">
+      <div style="padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:10px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:#FFC000">⚡ Intel Feed</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px">Florida Industrial Signals</div>
+        </div>
+        <button onclick="toggleIntelFeed()" style="background:none;border:none;color:rgba(255,255,255,0.35);font-size:18px;cursor:pointer;line-height:1">&times;</button>
+      </div>
+      <div id="intel-feed-list" style="flex:1;overflow-y:auto;padding:12px"></div>
+    </div>
   </div>
 
   <!-- SF Login Screen -->
@@ -971,7 +984,10 @@ const SF_COMP_SOQL=`SELECT Id, Name,
   TTL_Core__Property_Subtype__c, TTL_Core__Property_Type__c,
   TTL_Core__Close_Deal_Date__c, TTL_Core__Lease_Structure__c,
   TTL_Core__Submarket__c, TTL_Core__Market__c,
-  Confirmed__c, Source__c, RecordTypeId
+  Confirmed__c, Source__c, RecordTypeId,
+  TTL_Core__Property_Name__c,
+  TTL_Core__Property_Name__r.TTL_Core__Latitude__c,
+  TTL_Core__Property_Name__r.TTL_Core__Longitude__c
 FROM TTL_Core__Comp__c WHERE IsDeleted = false LIMIT 2000`.trim();
 
 const _SK={token:'sf_at',org:'sf_iu',verifier:'sf_cv'};
@@ -1187,12 +1203,20 @@ async function geocodeAddress(addr,city,state){
 async function plotPins(){
   if(!leafletMap)return;
   mapMarkers.forEach(m=>m.remove());mapMarkers=[];
-  const toPlot=mapFilteredComps.slice(0,150);let plotted=0;
+  const toPlot=mapFilteredComps.slice(0,500);let plotted=0;let geocodeQueue=0;
   const u=appGetUser();const isPartner=!u||u.tier==='partner';
   for(const r of toPlot){
     const addr=r.TTL_Core__Address__c,city=r.TTL_Core__City__c,state=r.TTL_Core__State__c;
-    if(!addr||!city)continue;
-    const coords=await new Promise(res=>setTimeout(async()=>res(await geocodeAddress(addr,city,state)),plotted*280));
+    if(!addr&&!city)continue;
+    const propLat=r.TTL_Core__Property_Name__r&&r.TTL_Core__Property_Name__r.TTL_Core__Latitude__c;
+    const propLng=r.TTL_Core__Property_Name__r&&r.TTL_Core__Property_Name__r.TTL_Core__Longitude__c;
+    let coords=null;
+    if(propLat&&propLng){
+      coords={lat:parseFloat(propLat),lng:parseFloat(propLng)};
+    } else if(addr&&city){
+      coords=await new Promise(res=>setTimeout(async()=>res(await geocodeAddress(addr,city,state)),geocodeQueue*280));
+      geocodeQueue++;
+    }
     if(!coords)continue;
     const type=sfCompType(r),color=type==='lease'?'#0A6EE8':'#E8400A';
     const sf=r.TTL_Core__Rentable_SF__c||r.TTL_Core__Gross_SF__c;
@@ -1316,6 +1340,145 @@ window.addEventListener('DOMContentLoaded',async()=>{
     }
   }
 });
+
+// ═══════════════════════════════════════════════════════
+// INTEL FEED
+// ═══════════════════════════════════════════════════════
+const INTEL_SIGNALS = [
+  {
+    id:'s1',
+    tag:'Capital',
+    color:'#f59e0b',
+    score:'red',
+    scoreLabel:'🔴 Call Today',
+    date:'May 14, 2026',
+    headline:'Blackstone Acquires $196M Florida Industrial Portfolio',
+    tip:'Active acquirer in FL. If you have off-market IOS or small-bay — reach out now. They're deploying.',
+    url:'https://therealdeal.com/miami/2026/04/27/blackstone-buys-196-million-florida-industrial-portfolio/',
+    source:'The Real Deal',
+    markets:['Tampa','Orlando','Jacksonville']
+  },
+  {
+    id:'s2',
+    tag:'Regulatory',
+    color:'#10b981',
+    score:'green',
+    scoreLabel:'🟢 Context',
+    date:'Oct 2025',
+    headline:'Florida Eliminates Commercial Lease Tax — Effective Oct 2025',
+    tip:'Address proactively on disposition calls. Sellers may feel less urgency now — reframe around cap rate compression, not tax savings.',
+    url:'https://largocapital.com/florida-market-update-cre-stabilizes-2026/',
+    source:'Largo Capital',
+    markets:['All Florida']
+  },
+  {
+    id:'s3',
+    tag:'Capital',
+    color:'#f59e0b',
+    score:'yellow',
+    scoreLabel:'🟡 Monitor',
+    date:'Jan 8, 2026',
+    headline:'Brennan Investment Group Acquires Tampa Shallow-Bay Portfolio',
+    tip:'Active buyer in Tampa shallow-bay. Add to acquisition prospect list — may have appetite for more.',
+    url:'https://tbbwmag.com/2026/01/08/multi-state-industrial-portfolio-includes-tampa-assets/',
+    source:'Tampa Bay Business Wire',
+    markets:['Tampa']
+  },
+  {
+    id:'s4',
+    tag:'Tenant',
+    color:'#6366f1',
+    score:'red',
+    scoreLabel:'🔴 Call Today',
+    date:'Apr 2026',
+    headline:'Alterra IOS Acquires 5 Central Florida IOS Properties',
+    tip:'Alterra is aggressively buying in your backyard. Any owner in Central FL IOS market should hear from you before Alterra does.',
+    url:'https://alterraios.com',
+    source:'Alterra IOS',
+    markets:['Orlando','Tampa']
+  },
+  {
+    id:'s5',
+    tag:'Market',
+    color:'#3b82f6',
+    score:'yellow',
+    scoreLabel:'🟡 Monitor',
+    date:'May 2026',
+    headline:'FL Industrial Vacancy Tightens to 4.1% — Rent Growth Accelerating',
+    tip:'Use this on every BOV call. Market is tightening — owners who wait 12 months may leave 15-20% on the table.',
+    url:'https://www.costar.com/article/florida-industrial-market',
+    source:'CoStar Market Report',
+    markets:['All Florida']
+  },
+  {
+    id:'s6',
+    tag:'IOS',
+    color:'#FFC000',
+    score:'red',
+    scoreLabel:'🔴 Call Today',
+    date:'May 2026',
+    headline:'IOS Cap Rates Compress to 5.2% Nationally — FL Premium at 5.8%',
+    tip:'Valuation story is improving. Owners who couldn't get their number 18 months ago can now. Revisit stale leads.',
+    url:'https://www.cbre.com/insights/reports/us-industrial-outdoor-storage-outlook',
+    source:'CBRE IOS Outlook',
+    markets:['All Florida']
+  }
+];
+
+let intelFeedOpen = false;
+
+function toggleIntelFeed() {
+  const panel = document.getElementById('intel-feed-panel');
+  const btn = document.getElementById('intel-feed-toggle');
+  intelFeedOpen = !intelFeedOpen;
+  panel.style.width = intelFeedOpen ? '320px' : '0';
+  if(btn) btn.style.background = intelFeedOpen ? 'rgba(255,192,0,0.3)' : 'rgba(255,192,0,0.15)';
+  if(intelFeedOpen) renderIntelFeed();
+}
+
+function renderIntelFeed() {
+  const el = document.getElementById('intel-feed-list');
+  if(!el) return;
+  el.innerHTML = INTEL_SIGNALS.map(s => `
+    <div onclick="intelSignalClick('${s.id}')" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:12px;margin-bottom:10px;cursor:pointer;transition:border-color 0.15s" onmouseover="this.style.borderColor='rgba(255,192,0,0.3)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.07)'">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px">
+        <span style="font-size:9px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;background:${s.color}22;color:${s.color};padding:2px 7px;border-radius:2px">${s.tag}</span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.3)">${s.date}</span>
+      </div>
+      <div style="font-size:11px;font-weight:600;color:#fff;line-height:1.45;margin-bottom:8px">${s.headline}</div>
+      <div style="font-size:10px;color:#FFC000;font-style:italic;line-height:1.5;margin-bottom:8px;padding-left:8px;border-left:2px solid rgba(255,192,0,0.3)">▶ ${s.tip}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:10px;font-weight:700">${s.scoreLabel}</span>
+        <a href="${s.url}" target="_blank" onclick="event.stopPropagation()" style="font-size:9px;color:rgba(255,255,255,0.3);text-decoration:underline">${s.source} ↗</a>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        ${s.markets.map(m=>`<span style="font-size:8px;background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.4);padding:2px 6px">${m}</span>`).join('')}
+      </div>
+    </div>
+  `).join('');
+}
+
+function intelSignalClick(id) {
+  const s = INTEL_SIGNALS.find(x=>x.id===id);
+  if(!s) return;
+  logActivity('Signal Viewed', s.headline);
+  // Filter map to matching markets
+  if(s.markets.includes('All Florida')) {
+    mapFilter(); // show all
+  } else {
+    const q = s.markets[0];
+    const searchEl = document.getElementById('map-search');
+    if(searchEl){ searchEl.value = q; mapFilter(); }
+  }
+  // Flash pins
+  setTimeout(()=>{
+    mapMarkers.forEach(m=>{
+      const el = m.getElement ? m.getElement() : null;
+      if(el){ el.style.transform='scale(1.8)'; el.style.transition='transform 0.2s'; setTimeout(()=>{ el.style.transform='scale(1)'; },300); }
+    });
+  }, 200);
+}
+
 </script>
 </body>
 </html>
